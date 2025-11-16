@@ -19,6 +19,11 @@ interface User {
   createdAt: string;
 }
 
+interface MapCoords {
+  lat: number;
+  lon: number;
+}
+
 export default function AdminRegistrations() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,25 +31,45 @@ export default function AdminRegistrations() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [mapUrl, setMapUrl] = useState<string>('');
+  const [mapCoords, setMapCoords] = useState<MapCoords | null>(null);
 
   useEffect(() => {
     fetchRegistrations();
   }, []);
 
   useEffect(() => {
-    if (selectedUser) {
-      // Generate map URL based on IP or address
-      let url = 'https://www.openstreetmap.org/export/embed.html?';
+    if (selectedUser && selectedUser.address) {
+      // Use Nominatim API to get coordinates for the address
+      const geocodeAddress = async () => {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedUser.address)}&limit=1`,
+            {
+              headers: {
+                'User-Agent': 'Betr-Admin' // Nominatim requires a User-Agent
+              }
+            }
+          );
+          const data = await response.json();
+          
+          if (data.length > 0) {
+            const { lat, lon } = data[0];
+            setMapCoords({ lat: parseFloat(lat), lon: parseFloat(lon) });
+            
+            // Create map embed URL with proper bounding box centered on the location
+            const margin = 0.1; // 0.1 degree margin around the point
+            const bbox = `${lon - margin},${lat - margin},${lon + margin},${lat + margin}`;
+            const url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+            setMapUrl(url);
+          }
+        } catch (err) {
+          console.error('Error geocoding address:', err);
+          // Fallback to world map
+          setMapUrl('https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik');
+        }
+      };
       
-      if (selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown') {
-        // For IP, show a generic world map (IP geolocation would need external service)
-        url += 'bbox=-180,-90,180,90&layer=mapnik&marker=0,0';
-      } else if (selectedUser.address) {
-        // For address, use search parameter to load address location
-        const encodedAddress = encodeURIComponent(selectedUser.address);
-        url = `https://www.openstreetmap.org/search?query=${encodedAddress}`;
-      }
-      setMapUrl(url);
+      geocodeAddress();
     }
   }, [selectedUser]);
 
@@ -306,31 +331,26 @@ export default function AdminRegistrations() {
                 </div>
               </div>
 
-              {/* Location Map - IP or Address based */}
-              {(selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown') || selectedUser.address ? (
+              {/* Location Map - Address based with geocoding */}
+              {selectedUser.address && mapUrl && (
                 <div className="border-t border-purple-500/30 pt-6 mt-6">
-                  <h3 className="text-xl font-bold text-white mb-4">
-                    Location ({selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? 'IP Geolocation' : 'Address Based'})
-                  </h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Location (Address Based)</h3>
                   <div className="rounded-lg overflow-hidden border border-purple-500/30 h-64 bg-gray-900 w-full md:w-96">
                     <iframe
                       width="100%"
                       height="100%"
-                      style={{ border: 'none' }}
-                      src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik"
+                      style={{border: 'none'}}
+                      src={mapUrl}
                       title="Location Map"
                       loading="lazy"
                     />
                   </div>
                   <p className="text-gray-400 text-xs mt-2">
-                    {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? (
-                      <>IP: {selectedUser.ipAddress}</>
-                    ) : (
-                      <>Address: {selectedUser.address}</>
-                    )}
+                    Address: {selectedUser.address}
+                    {mapCoords && ` (Lat: ${mapCoords.lat.toFixed(4)}, Lon: ${mapCoords.lon.toFixed(4)})`}
                   </p>
                 </div>
-              ) : null}
+              )}
 
               {/* ID Photos and Selfie */}
               {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
