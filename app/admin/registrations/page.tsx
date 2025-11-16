@@ -176,53 +176,6 @@ export default function AdminRegistrations() {
     }
   };
 
-  const downloadSelfieAndLaunchCamera = async () => {
-    try {
-      if (!selectedUser?.selfiePhoto) {
-        alert('No selfie photo available');
-        return;
-      }
-
-      // Download the selfie
-      const link = document.createElement('a');
-      link.href = selectedUser.selfiePhoto;
-      link.download = `${selectedUser.fullName}_selfie_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Launch xpression camera using the .lnk shortcut
-      const shortcutPath = 'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\xpression camera\\xpression camera.lnk';
-
-      try {
-        const response = await fetch('/api/launch-program', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            programPath: shortcutPath,
-            userId: selectedUser._id,
-            userName: selectedUser.fullName,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          console.log('Xpression Camera launched');
-        } else {
-          console.error('Failed to launch:', data.error);
-          alert(`Selfie downloaded but camera launch failed: ${data.error}`);
-        }
-      } catch (error) {
-        console.error('Error launching program:', error);
-        alert('Selfie downloaded but could not launch camera. Check server logs for details.');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error downloading selfie or launching camera');
-    }
-  };
-
   const getUserStatus = (user: User): string => {
     // If all 3 photos are uploaded, mark as verified
     if (user.idFrontPhoto && user.idBackPhoto && user.selfiePhoto) {
@@ -430,15 +383,7 @@ export default function AdminRegistrations() {
               {/* ID Photos and Selfie */}
               {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
                 <div className="border-t border-purple-500/30 pt-8 mt-8">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-2xl font-bold text-white">Verification Photos</h3>
-                    <button
-                      onClick={downloadSelfieAndLaunchCamera}
-                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded text-sm transition-all active:scale-95"
-                    >
-                      Download Selfie & Open Camera
-                    </button>
-                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-6">Verification Photos</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {selectedUser.idFrontPhoto && (
                       <div>
