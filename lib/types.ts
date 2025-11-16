@@ -1,5 +1,5 @@
 declare global {
-  var mongoose: typeof globalThis.mongoose & {
+  var mongoose: {
     conn: unknown | null;
     promise: Promise<unknown> | null;
   };
