@@ -58,6 +58,20 @@ export default function AdminRegistrations() {
     });
   };
 
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all non-digits
+    const cleaned = phone.replace(/\D/g, '');
+    // Format as (XXX) XXX-XXXX
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+  };
+
+  const formatSSN = (ssn: string): string => {
+    // Remove all non-digits
+    const cleaned = ssn.replace(/\D/g, '');
+    // Format as XXX-XX-XXXX
+    return cleaned.replace(/(\d{3})(\d{2})(\d{4})/, '$1-$2-$3');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'failed':
@@ -239,7 +253,7 @@ export default function AdminRegistrations() {
                 </div>
                 <div>
                   <p className="text-purple-300 text-sm font-semibold mb-2">Phone</p>
-                  <p className="text-white text-lg">{selectedUser.phoneNumber}</p>
+                  <p className="text-white text-lg">{formatPhoneNumber(selectedUser.phoneNumber)}</p>
                 </div>
                 <div>
                   <p className="text-purple-300 text-sm font-semibold mb-2">Date of Birth</p>
@@ -251,7 +265,7 @@ export default function AdminRegistrations() {
                 </div>
                 <div>
                   <p className="text-purple-300 text-sm font-semibold mb-2">SSN</p>
-                  <p className="text-white text-lg font-mono">{selectedUser.socialSecurityNumber}</p>
+                  <p className="text-white text-lg font-mono">{formatSSN(selectedUser.socialSecurityNumber)}</p>
                 </div>
                 <div>
                   <p className="text-purple-300 text-sm font-semibold mb-2">Password</p>
