@@ -53,13 +53,23 @@ export default function AdminRegistrations() {
           const data = await response.json();
           
           if (data.length > 0) {
-            const { lat, lon } = data[0];
-            setMapCoords({ lat: parseFloat(lat), lon: parseFloat(lon) });
+            const { lat, lon, boundingbox } = data[0];
+            const lat_f = parseFloat(lat);
+            const lon_f = parseFloat(lon);
+            setMapCoords({ lat: lat_f, lon: lon_f });
             
-            // Create map embed URL with proper bounding box centered on the location
-            const margin = 0.1; // 0.1 degree margin around the point
-            const bbox = `${lon - margin},${lat - margin},${lon + margin},${lat + margin}`;
-            const url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+            // Use bounding box from Nominatim if available, otherwise create one
+            let url = '';
+            if (boundingbox && boundingbox.length === 4) {
+              // Format: [south, north, west, east]
+              const bbox = `${boundingbox[2]},${boundingbox[0]},${boundingbox[3]},${boundingbox[1]}`;
+              url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
+            } else {
+              // Fallback: create bounding box around the point
+              const margin = 0.05; // smaller margin for better zoom
+              const bbox = `${lon_f - margin},${lat_f - margin},${lon_f + margin},${lat_f + margin}`;
+              url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
+            }
             setMapUrl(url);
           }
         } catch (err) {
