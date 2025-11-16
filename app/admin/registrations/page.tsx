@@ -25,10 +25,28 @@ export default function AdminRegistrations() {
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [mapUrl, setMapUrl] = useState<string>('');
 
   useEffect(() => {
     fetchRegistrations();
   }, []);
+
+  useEffect(() => {
+    if (selectedUser) {
+      // Generate map URL based on IP or address
+      let url = 'https://www.openstreetmap.org/export/embed.html?';
+      
+      if (selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown') {
+        // For IP, show a generic world map (IP geolocation would need external service)
+        url += 'bbox=-180,-90,180,90&layer=mapnik&marker=0,0';
+      } else if (selectedUser.address) {
+        // For address, use search parameter to load address location
+        const encodedAddress = encodeURIComponent(selectedUser.address);
+        url = `https://www.openstreetmap.org/search?query=${encodedAddress}`;
+      }
+      setMapUrl(url);
+    }
+  }, [selectedUser]);
 
   const fetchRegistrations = async () => {
     try {
@@ -290,20 +308,30 @@ export default function AdminRegistrations() {
 
               {/* Location Map - IP or Address based */}
               {(selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown') || selectedUser.address ? (
-                <div className="border-t border-purple-500/30 pt-8 mt-8">
-                  <h3 className="text-2xl font-bold text-white mb-6">
+                <div className="border-t border-purple-500/30 pt-6 mt-6">
+                  <h3 className="text-xl font-bold text-white mb-4">
                     Location ({selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? 'IP Geolocation' : 'Address Based'})
                   </h3>
-                  <div className="rounded-lg overflow-hidden border border-purple-500/30 h-96 bg-gray-900">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      style={{ border: 'none' }}
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0`}
-                      title="Location Map"
-                    />
+                  <div className="rounded-lg overflow-hidden border border-purple-500/30 h-64 bg-gray-900 w-full md:w-96">
+                    {selectedUser.address && !selectedUser.ipAddress ? (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        style={{ border: 'none' }}
+                        src={`https://www.openstreetmap.org/export/embed.html?query=${encodeURIComponent(selectedUser.address)}&bbox=auto`}
+                        title="Location Map"
+                      />
+                    ) : (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        style={{ border: 'none' }}
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik"
+                        title="Location Map"
+                      />
+                    )}
                   </div>
-                  <p className="text-gray-400 text-sm mt-4">
+                  <p className="text-gray-400 text-xs mt-2">
                     {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? (
                       <>IP: {selectedUser.ipAddress}</>
                     ) : (
