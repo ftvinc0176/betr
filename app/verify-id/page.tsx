@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, Suspense } from 'react';
 
-export default function VerifyID() {
+function VerifyIDContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const userId = searchParams.get('userId');
@@ -278,5 +278,19 @@ export default function VerifyID() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyID() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <VerifyIDContent />
+    </Suspense>
   );
 }
