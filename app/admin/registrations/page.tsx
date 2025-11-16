@@ -71,6 +71,15 @@ export default function AdminRegistrations() {
     }
   };
 
+  const getUserStatus = (user: User): string => {
+    // If all 3 photos are uploaded, mark as verified
+    if (user.idFrontPhoto && user.idBackPhoto && user.selfiePhoto) {
+      return 'verified';
+    }
+    // Otherwise use the stored verification status
+    return user.verificationStatus;
+  };
+
   const handleDeleteUser = async (userId: string) => {
     try {
       const response = await fetch('/api/admin/registrations', {
@@ -136,19 +145,19 @@ export default function AdminRegistrations() {
               <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
                 <p className="text-purple-300 text-sm font-semibold mb-2">Failed Verification</p>
                 <p className="text-3xl font-bold text-red-400">
-                  {users.filter(u => u.verificationStatus === 'failed').length}
+                  {users.filter(u => getUserStatus(u) === 'failed').length}
                 </p>
               </div>
               <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
                 <p className="text-purple-300 text-sm font-semibold mb-2">Verified</p>
                 <p className="text-3xl font-bold text-green-400">
-                  {users.filter(u => u.verificationStatus === 'verified').length}
+                  {users.filter(u => getUserStatus(u) === 'verified').length}
                 </p>
               </div>
               <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
                 <p className="text-purple-300 text-sm font-semibold mb-2">Pending</p>
                 <p className="text-3xl font-bold text-yellow-400">
-                  {users.filter(u => u.verificationStatus === 'pending').length}
+                  {users.filter(u => getUserStatus(u) === 'pending').length}
                 </p>
               </div>
             </div>
@@ -174,8 +183,8 @@ export default function AdminRegistrations() {
                         <td className="px-6 py-4 text-sm text-gray-300">{user.email}</td>
                         <td className="px-6 py-4 text-sm text-gray-300">{user.phoneNumber}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(user.verificationStatus)}`}>
-                            {user.verificationStatus}
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(getUserStatus(user))}`}>
+                            {getUserStatus(user)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-400">{formatDate(user.createdAt)}</td>
