@@ -45,9 +45,14 @@ export default function LoginPage() {
         return;
       }
 
-      setSuccess('Login successful! Redirecting...');
+      const userId = data.user?.id || data.user?._id;
+      setSuccess('Login successful! Redirecting to verification...');
       setTimeout(() => {
-        router.push('/');
+        if (userId) {
+          router.push(`/verify-id?userId=${encodeURIComponent(userId)}`);
+        } else {
+          router.push('/');
+        }
       }, 2000);
     } catch (err) {
       setError('An error occurred. Please try again.');
