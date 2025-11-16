@@ -12,9 +12,14 @@ export async function POST(request: NextRequest) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    console.log('Checking API key...');
+    console.log('GEMINI_API_KEY exists:', !!apiKey);
+    console.log('GEMINI_API_KEY length:', apiKey?.length);
+    
+    if (!apiKey || apiKey.trim() === '') {
+      console.error('Gemini API key is missing or empty');
       return NextResponse.json(
-        { error: 'Gemini API key not configured' },
+        { error: 'Gemini API key not configured - please add GEMINI_API_KEY to environment variables' },
         { status: 500 }
       );
     }
@@ -23,7 +28,9 @@ export async function POST(request: NextRequest) {
     const idPhotoBase64 = idFrontPhotoUrl.includes(',') ? idFrontPhotoUrl.split(',')[1] : idFrontPhotoUrl;
     const selfiePhotoBase64 = selfiePhotoUrl.includes(',') ? selfiePhotoUrl.split(',')[1] : selfiePhotoUrl;
 
-    // Call Gemini API with vision capabilities to analyze and describe the composite
+    console.log('Calling Gemini API with key:', apiKey.substring(0, 10) + '...');
+
+    // Call Gemini API with vision capabilities
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -34,7 +41,7 @@ export async function POST(request: NextRequest) {
           {
             parts: [
               {
-                text: 'You are an AI image editor. I will provide you with two images: 1) A front license ID photo, and 2) A selfie photo. Your task is to create a composite/edited image that shows the user holding their ID document up in the selfie. The composite should look realistic and natural. Important: You must generate and return the actual image as a base64-encoded PNG image.',
+                text: 'You are an expert image editor. I will provide you with two images: 1) A front license ID photo, and 2) A selfie photo. Please create a composite/edited image that realistically shows the user holding their ID document up to their face in the selfie. The composite should look natural and realistic.',
               },
               {
                 inlineData: {
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
                 },
               },
               {
-                text: 'This is the selfie photo where we need to add the ID.',
+                text: 'This is the selfie photo where I need you to add the ID being held up.',
               },
               {
                 inlineData: {
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest) {
                 },
               },
               {
-                text: 'Now create a composite image showing the user holding the ID up in the selfie. Return the result as a base64-encoded image.',
+                text: 'Create and return the composite image as base64 PNG data.',
               },
             ],
           },
@@ -66,38 +73,45 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
+    console.log('Gemini API Response status:', response.status);
+    console.log('Gemini API Response:', JSON.stringify(data).substring(0, 200));
+
     if (!response.ok) {
       console.error('Gemini API error:', data);
       return NextResponse.json(
-        { error: 'Failed to generate composite image' },
+        { error: `Failed to generate composite image: ${data.error?.message || 'Unknown error'}` },
         { status: response.status }
       );
     }
 
     const generatedContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
-    console.log('Generated composite response:', generatedContent?.substring(0, 100));
+    console.log('Generated content received, length:', generatedContent?.length);
 
     // Try to extract base64 image from response
     let compositePhotoData = null;
     if (generatedContent) {
       // Look for base64 data in the response
-      const base64Match = generatedContent.match(/base64[,:]([A-Za-z0-9+/=]+)/);
+      const base64Match = generatedContent.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)|base64[,:]([A-Za-z0-9+/=]+)/);
       if (base64Match) {
-        compositePhotoData = `data:image/png;base64,${base64Match[1]}`;
+        const base64Data = base64Match[1] || base64Match[2];
+        compositePhotoData = `data:image/png;base64,${base64Data}`;
+        console.log('Extracted base64 image, length:', base64Data.length);
+      } else {
+        console.log('No base64 data found in response');
+        console.log('Response preview:', generatedContent.substring(0, 200));
       }
     }
 
     return NextResponse.json({
       success: true,
       message: 'Composite photo generated successfully',
-      compositePhoto: compositePhotoData,
-      generatedContent: generatedContent,
+      compositePhoto: compositePhotoData || generatedContent, // Return the full response if no image found
     });
   } catch (error) {
     console.error('Error generating composite image:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
