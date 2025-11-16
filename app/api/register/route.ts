@@ -24,7 +24,20 @@ export async function POST(request: NextRequest) {
     const userPassword = password || 'temp_password_123';
     
     // Extract only the date part (YYYY-MM-DD) without time
-    const dateOnly = dateOfBirth ? dateOfBirth.split('T')[0] : '2000-01-01';
+    let dateOnly = '2000-01-01';
+    if (dateOfBirth) {
+      // Handle both ISO strings and plain date strings
+      if (typeof dateOfBirth === 'string') {
+        // If it's already a date string, extract just the date part
+        dateOnly = dateOfBirth.split('T')[0];
+      } else {
+        // If it's a Date object, convert to YYYY-MM-DD
+        const d = new Date(dateOfBirth);
+        if (!isNaN(d.getTime())) {
+          dateOnly = d.toISOString().split('T')[0];
+        }
+      }
+    }
     
     // Create new user - no email uniqueness check, allow duplicates
     const user = await User.create({
