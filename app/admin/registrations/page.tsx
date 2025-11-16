@@ -288,24 +288,30 @@ export default function AdminRegistrations() {
                 </div>
               </div>
 
-              {/* IP Location Map */}
-              {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' && (
+              {/* Location Map - IP or Address based */}
+              {(selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown') || selectedUser.address ? (
                 <div className="border-t border-purple-500/30 pt-8 mt-8">
-                  <h3 className="text-2xl font-bold text-white mb-6">Location (IP Geolocation)</h3>
+                  <h3 className="text-2xl font-bold text-white mb-6">
+                    Location ({selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? 'IP Geolocation' : 'Address Based'})
+                  </h3>
                   <div className="rounded-lg overflow-hidden border border-purple-500/30 h-96 bg-gray-900">
                     <iframe
                       width="100%"
                       height="100%"
                       style={{ border: 'none' }}
-                      src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0`}
                       title="Location Map"
                     />
                   </div>
                   <p className="text-gray-400 text-sm mt-4">
-                    Displaying global map. IP: {selectedUser.ipAddress}
+                    {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? (
+                      <>IP: {selectedUser.ipAddress}</>
+                    ) : (
+                      <>Address: {selectedUser.address}</>
+                    )}
                   </p>
                 </div>
-              )}
+              ) : null}
 
               {/* ID Photos and Selfie */}
               {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
