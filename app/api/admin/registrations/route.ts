@@ -78,3 +78,53 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+export async function PATCH(request: NextRequest): Promise<NextResponse> {
+  try {
+    await connectDB();
+
+    const body = await request.json();
+    const { userId, compositePhoto } = body;
+
+    if (!userId || !compositePhoto) {
+      return NextResponse.json(
+        { error: 'User ID and composite photo are required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { compositePhoto },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('Composite photo saved:', {
+      userId,
+      email: updatedUser.email,
+      photoLength: compositePhoto.length,
+      timestamp: new Date().toISOString(),
+    });
+
+    return NextResponse.json(
+      {
+        message: 'Composite photo saved successfully',
+        user: updatedUser,
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error('Admin composite photo save error:', error);
+    return NextResponse.json(
+      { error: 'Failed to save composite photo' },
+      { status: 500 }
+    );
+  }
+}

@@ -127,7 +127,8 @@ export default function AdminRegistrations() {
 
     setGeneratingComposite(true);
     try {
-      const response = await fetch('/api/generate-composite-photo', {
+      // Step 1: Generate composite using the API
+      const generateResponse = await fetch('/api/generate-composite-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,21 +137,36 @@ export default function AdminRegistrations() {
         }),
       });
 
-      const data = await response.json();
+      const generateData = await generateResponse.json();
 
-      if (!response.ok) {
-        alert(`Error: ${data.error || 'Failed to generate composite photo'}`);
+      if (!generateResponse.ok) {
+        alert(`Error: ${generateData.error || 'Failed to generate composite photo'}`);
         return;
       }
 
-      // Update the selected user with the generated composite photo
-      if (data.compositePhoto) {
-        setSelectedUser(prev => prev ? { ...prev, compositePhoto: data.compositePhoto } : null);
+      // Step 2: Save composite to database
+      if (generateData.compositePhoto) {
+        const saveResponse = await fetch('/api/admin/registrations', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: selectedUser._id,
+            compositePhoto: generateData.compositePhoto,
+          }),
+        });
+
+        const saveData = await saveResponse.json();
+
+        if (!saveResponse.ok) {
+          alert(`Error saving composite: ${saveData.error || 'Failed to save composite photo'}`);
+          return;
+        }
+
+        // Step 3: Update the UI with the saved composite
+        setSelectedUser(prev => prev ? { ...prev, compositePhoto: generateData.compositePhoto } : null);
+        setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, compositePhoto: generateData.compositePhoto } : u));
         
-        // Also update in the users list
-        setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, compositePhoto: data.compositePhoto } : u));
-        
-        alert('Composite photo generated successfully!');
+        alert('Composite photo generated and saved successfully!');
       }
     } catch (err) {
       console.error('Error generating composite:', err);
