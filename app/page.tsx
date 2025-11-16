@@ -7,45 +7,45 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <nav className="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-gray-900">
+        <div className="w-full px-8 lg:px-16">
+          <div className="flex justify-between items-center h-24">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
-                ProBets
+              <h1 className="text-4xl font-black tracking-tighter">
+                <span className="text-purple-500">Betr</span><span className="text-white"></span>
               </h1>
             </div>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="hover:text-blue-400 transition">
-                Features
+            <div className="hidden md:flex items-center gap-16">
+              <a href="#play" className="text-white hover:text-purple-400 transition font-medium text-base">
+                Play now
               </a>
-              <a href="#about" className="hover:text-blue-400 transition">
-                About
+              <a href="#products" className="text-white hover:text-purple-400 transition font-medium text-base">
+                Products
               </a>
-              <a href="#contact" className="hover:text-blue-400 transition">
-                Contact
+              <a href="#availability" className="text-white hover:text-purple-400 transition font-medium text-base">
+                Availability
               </a>
               <Link
                 href="/login"
-                className="px-4 py-2 rounded-lg border border-blue-500 hover:bg-blue-500 hover:text-white transition"
+                className="text-white hover:text-purple-400 transition font-medium text-base"
               >
-                Login
+                Log in
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition font-semibold"
+                className="px-8 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 transition font-bold text-white shadow-lg"
               >
-                Register
+                Sign up
               </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden"
+              className="md:hidden p-2"
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,144 +56,145 @@ export default function Home() {
 
           {/* Mobile Menu */}
           {menuOpen && (
-            <div className="md:hidden pb-4 space-y-2">
-              <a href="#features" className="block hover:text-blue-400 transition py-2">
-                Features
+            <div className="md:hidden pb-6 space-y-4 border-t border-gray-900 pt-6">
+              <a href="#play" className="block text-white hover:text-purple-400 transition font-medium">
+                Play now
               </a>
-              <a href="#about" className="block hover:text-blue-400 transition py-2">
-                About
+              <a href="#products" className="block text-white hover:text-purple-400 transition font-medium">
+                Products
               </a>
-              <a href="#contact" className="block hover:text-blue-400 transition py-2">
-                Contact
+              <a href="#availability" className="block text-white hover:text-purple-400 transition font-medium">
+                Availability
               </a>
-              <Link href="/login" className="block py-2 text-blue-400 hover:text-blue-300">
-                Login
+              <Link href="/login" className="block text-white hover:text-purple-400 transition font-medium">
+                Log in
               </Link>
-              <Link href="/register" className="block py-2 text-blue-400 hover:text-blue-300">
-                Register
+              <Link href="/register" className="block px-8 py-3 bg-purple-600 rounded-full font-bold text-center">
+                Sign up
               </Link>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-5xl md:text-7xl font-bold mb-6">
-              The Future of Sports Betting
+      {/* Hero Section - Full Height */}
+      <section id="play" className="relative w-full min-h-[90vh] flex items-center justify-center px-6 py-32 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-900/30 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-purple-800/20 rounded-full blur-3xl opacity-30"></div>
+          <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-purple-700/10 rounded-full blur-3xl opacity-20"></div>
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+          {/* Badge */}
+          <div className="inline-block">
+            <div className="px-6 py-3 rounded-full border border-purple-500/60 bg-purple-500/10 backdrop-blur-sm">
+              <span className="text-purple-300 text-sm font-bold tracking-widest uppercase">Picks New User Offer</span>
+            </div>
+          </div>
+
+          {/* Main Heading - Dynamic Layout */}
+          <div className="space-y-4">
+            {/* FREE */}
+            <h2 className="text-7xl md:text-8xl lg:text-9xl font-black text-purple-500 leading-none tracking-tighter drop-shadow-2xl">
+              FREE
             </h2>
-            <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-              Join thousands of bettors enjoying real-time odds, live betting, and exclusive promotions on your favorite sports.
+            
+            {/* $10 */}
+            <div className="text-8xl md:text-9xl lg:text-[10rem] font-black text-white leading-none tracking-tighter drop-shadow-2xl">
+              $10
+            </div>
+            
+            {/* NO DEPOSIT REQUIRED */}
+            <h3 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight pt-4">
+              NO DEPOSIT<br />REQUIRED
+            </h3>
+          </div>
+
+          {/* Subheading */}
+          <div className="pt-8 space-y-2">
+            <p className="text-lg md:text-xl text-gray-300">
+              Get your free $10 today and join players who&apos;ve already
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
-                className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition font-semibold text-lg"
-              >
-                Create Account
-              </Link>
-              <Link
-                href="/login"
-                className="px-8 py-3 rounded-lg border-2 border-blue-500 hover:bg-blue-500 hover:text-white transition font-semibold text-lg"
-              >
-                Sign In
-              </Link>
-            </div>
+            <p className="text-2xl md:text-3xl font-bold">
+              <span className="text-purple-400">won over $250M</span> <span className="text-gray-300">on Betr.</span>
+            </p>
           </div>
 
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-8 mt-24">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-400 mb-2">50K+</div>
-              <p className="text-gray-400">Active Users</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-400 mb-2">$10M+</div>
-              <p className="text-gray-400">Daily Volume</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-400 mb-2">24/7</div>
-              <p className="text-gray-400">Live Betting</p>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center pt-12">
+            <Link
+              href="/register"
+              className="px-12 py-4 rounded-full bg-purple-600 hover:bg-purple-700 transition font-bold text-xl text-white shadow-2xl shadow-purple-600/50 hover:shadow-purple-600/80 transform hover:scale-105 hover:translate-y-1 duration-200"
+            >
+              Claim free $10
+            </Link>
+            <button className="px-12 py-4 rounded-full border-2 border-gray-600 hover:border-gray-400 transition font-semibold text-lg text-white hover:bg-white/5 transform hover:scale-105 duration-200">
+              Learn more
+            </button>
+          </div>
+
+          {/* Featured In Section */}
+          <div className="pt-24 space-y-8">
+            <p className="text-gray-500 text-xs font-bold tracking-widest uppercase">Featured in</p>
+            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10 opacity-50 hover:opacity-70 transition">
+              {[
+                { text: 'SBJ', width: 'w-12' },
+                { text: 'FOX', width: 'w-10' },
+                { text: 'Bloomberg', width: 'w-24' },
+                { text: 'ESPN', width: 'w-16' },
+                { text: 'NY Post', width: 'w-16' },
+                { text: 'CNBC', width: 'w-12' },
+                { text: 'Hollywood', width: 'w-20' }
+              ].map((logo, idx) => (
+                <div key={idx} className="text-gray-500 font-bold text-sm whitespace-nowrap">{logo.text}</div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="bg-gray-800 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h3 className="text-4xl font-bold text-center mb-16">Why Choose ProBets?</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 hover:border-blue-500 transition">
-              <div className="text-3xl mb-4">⚡</div>
-              <h4 className="text-xl font-semibold mb-3">Real-Time Odds</h4>
-              <p className="text-gray-400">Get live odds updates and instant notifications for your favorite events.</p>
-            </div>
-            <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 hover:border-blue-500 transition">
-              <div className="text-3xl mb-4">🏆</div>
-              <h4 className="text-xl font-semibold mb-3">Premium Payouts</h4>
-              <p className="text-gray-400">Competitive odds and generous payouts on all your winning bets.</p>
-            </div>
-            <div className="bg-gray-900 p-8 rounded-lg border border-gray-700 hover:border-blue-500 transition">
-              <div className="text-3xl mb-4">🔒</div>
-              <h4 className="text-xl font-semibold mb-3">Secure & Safe</h4>
-              <p className="text-gray-400">Bank-level security protects your personal and financial information.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-blue-800 py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h3 className="text-4xl font-bold mb-8">Ready to Get Started?</h3>
-          <p className="text-xl text-gray-300 mb-12">Join our community of sports bettors today and get exclusive welcome bonuses.</p>
-          <Link
-            href="/register"
-            className="inline-block px-8 py-4 rounded-lg bg-white text-blue-600 hover:bg-gray-100 transition font-bold text-lg"
-          >
-            Sign Up Now
-          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800 py-12 px-4">
+      <footer className="bg-black border-t border-gray-900 py-24 px-6 lg:px-16">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-16 mb-20">
             <div>
-              <h4 className="font-semibold mb-4">About</h4>
-              <p className="text-gray-400 text-sm">Leading sports betting platform with millions of satisfied customers.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="text-gray-400 text-sm space-y-2">
-                <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition">Responsible Gaming</a></li>
+              <h4 className="font-black text-lg text-white mb-8">Company</h4>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">About Us</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Careers</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Press</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="text-gray-400 text-sm space-y-2">
-                <li><a href="#" className="hover:text-white transition">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition">FAQ</a></li>
+              <h4 className="font-black text-lg text-white mb-8">Legal</h4>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Responsible Gaming</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Follow Us</h4>
-              <ul className="text-gray-400 text-sm space-y-2">
-                <li><a href="#" className="hover:text-white transition">Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition">Facebook</a></li>
-                <li><a href="#" className="hover:text-white transition">Instagram</a></li>
+              <h4 className="font-black text-lg text-white mb-8">Support</h4>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Help Center</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Contact</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-black text-lg text-white mb-8">Social</h4>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Twitter</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Instagram</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition text-sm">Facebook</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 ProBets. All rights reserved. Must be 21+ to participate.</p>
+
+          <div className="border-t border-gray-900 pt-12 text-center text-gray-500 text-sm">
+            <p>&copy; 2024 Betr. All rights reserved. Must be 21+ to participate. Play responsibly.</p>
           </div>
         </div>
       </footer>

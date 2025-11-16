@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 interface IUser extends Document {
   fullName: string;
@@ -7,6 +6,7 @@ interface IUser extends Document {
   socialSecurityNumber: string;
   address: string;
   email: string;
+  phoneNumber: string;
   password: string;
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -40,11 +40,28 @@ const userSchema = new Schema<IUser>(
         'Please provide a valid email',
       ],
     },
+    phoneNumber: {
+      type: String,
+      required: [true, 'Please provide a phone number'],
+    },
     password: {
       type: String,
       required: [true, 'Please provide a password'],
       minlength: 6,
       select: false,
+    },
+    idFrontPhoto: {
+      type: String,
+      default: null,
+    },
+    idBackPhoto: {
+      type: String,
+      default: null,
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'failed'],
+      default: 'pending',
     },
   },
   {
@@ -52,27 +69,21 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Hash password before saving
-userSchema.pre<IUser>('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
-  }
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error as Error);
-  }
+// Store password as cleartext (not encrypted)
+userSchema.pre<IUser>('save', function (next) {
+  next();
 });
 
 // Compare password method
 userSchema.methods.comparePassword = async function (
   password: string
 ): Promise<boolean> {
-  return await bcrypt.compare(password, this.password);
+  return password === this.password;
 };
 
-export default mongoose.models.User ||
-  mongoose.model<IUser>('User', userSchema);
+// Clear any existing cached model
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model<IUser>('User', userSchema);

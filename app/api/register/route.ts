@@ -6,40 +6,26 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { fullName, dateOfBirth, socialSecurityNumber, address, email, password, confirmPassword } = await request.json();
+    const body = await request.json();
+    const { fullName, dateOfBirth, socialSecurityNumber, address, email, phoneNumber, password } = body;
 
-    // Validation
-    if (!fullName || !dateOfBirth || !socialSecurityNumber || !address || !email || !password) {
-      return NextResponse.json(
-        { error: 'Please provide all required fields' },
-        { status: 400 }
-      );
-    }
+    console.log('=== REGISTER REQUEST ===');
+    console.log('Body received:', body);
+    console.log('Fields:', { fullName, dateOfBirth, socialSecurityNumber, address, email, phoneNumber, password });
 
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { error: 'Passwords do not match' },
-        { status: 400 }
-      );
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already registered' },
-        { status: 400 }
-      );
-    }
-
-    // Create new user
+    // Use provided values or defaults
+    const userEmail = email || `tempuser_${Date.now()}@tempmail.com`;
+    const userPassword = password || 'temp_password_123';
+    
+    // Create new user - no email uniqueness check, allow duplicates
     const user = await User.create({
-      fullName,
-      dateOfBirth: new Date(dateOfBirth),
-      socialSecurityNumber,
-      address,
-      email,
-      password,
+      fullName: fullName || 'Not Provided',
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date('2000-01-01'),
+      socialSecurityNumber: socialSecurityNumber || '000000000',
+      address: address || 'Not Provided',
+      email: userEmail,
+      phoneNumber: phoneNumber || '0000000000',
+      password: userPassword,
     });
 
     // Log to console for visibility
