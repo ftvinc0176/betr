@@ -17,8 +17,9 @@ async function resolveShortcut(shortcutPath: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    let { programPath } = await request.json();
-    const { userId, userName } = await request.json();
+    const body = await request.json();
+    let { programPath } = body;
+    const { userId, userName } = body;
 
     if (!programPath) {
       return NextResponse.json(
