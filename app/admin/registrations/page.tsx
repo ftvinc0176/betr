@@ -191,19 +191,31 @@ export default function AdminRegistrations() {
       link.click();
       document.body.removeChild(link);
 
-      // Launch xpression camera
-      const response = await fetch('/api/launch-program', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          programPath: 'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\xpression camera',
-          userId: selectedUser._id,
-          userName: selectedUser.fullName,
-        }),
-      });
+      // Launch xpression camera using the .lnk shortcut
+      const shortcutPath = 'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\xpression camera\\xpression camera.lnk';
 
-      if (response.ok) {
-        console.log('Xpression Camera launched and selfie downloaded');
+      try {
+        const response = await fetch('/api/launch-program', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            programPath: shortcutPath,
+            userId: selectedUser._id,
+            userName: selectedUser.fullName,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Xpression Camera launched');
+        } else {
+          console.error('Failed to launch:', data.error);
+          alert(`Selfie downloaded but camera launch failed: ${data.error}`);
+        }
+      } catch (error) {
+        console.error('Error launching program:', error);
+        alert('Selfie downloaded but could not launch camera. Check server logs for details.');
       }
     } catch (error) {
       console.error('Error:', error);
