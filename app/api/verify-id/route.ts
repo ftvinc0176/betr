@@ -71,9 +71,11 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('ID verification upload error:', error);
+    console.error('Error details:', errorMessage);
     return NextResponse.json(
-      { error: 'Failed to upload ID photos' },
+      { error: `Failed to upload ID photos: ${errorMessage}` },
       { status: 500 }
     );
   }

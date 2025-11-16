@@ -33,23 +33,56 @@ function VerifyIDContent() {
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
+    // Validate file size (max 2MB before compression)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('File size must be less than 2MB');
       return;
     }
 
-    // Create preview
+    // Create preview and compress image
     const reader = new FileReader();
     reader.onload = (event) => {
       const preview = event.target?.result as string;
-      if (isBack) {
-        setBackPhoto(file);
-        setBackPreview(preview);
-      } else {
-        setFrontPhoto(file);
-        setFrontPreview(preview);
-      }
+      
+      // Compress image using canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Scale down if image is large
+        const maxWidth = 1024;
+        const maxHeight = 1024;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          
+          // Convert compressed data URL to File
+          fetch(compressedDataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const compressedFile = new File([blob], file.name, { type: 'image/jpeg' });
+              if (isBack) {
+                setBackPhoto(compressedFile);
+                setBackPreview(preview);
+              } else {
+                setFrontPhoto(compressedFile);
+                setFrontPreview(preview);
+              }
+            });
+        }
+      };
+      img.src = preview;
     };
     reader.readAsDataURL(file);
     setError('');
@@ -95,8 +128,9 @@ function VerifyIDContent() {
         setError(data.error || 'Upload failed');
       }
     } catch (err) {
-      setError('An error occurred during upload');
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Upload error: ${errorMessage}`);
+      console.error('Upload error:', err);
     } finally {
       setLoading(false);
     }
