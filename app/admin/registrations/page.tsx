@@ -112,6 +112,16 @@ export default function AdminRegistrations() {
     });
   };
 
+  const formatDateOnly = (dateString: string) => {
+    // For date-only strings (YYYY-MM-DD format)
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   const formatPhoneNumber = (phone: string): string => {
     // Remove all non-digits
     const cleaned = phone.replace(/\D/g, '');
@@ -311,7 +321,7 @@ export default function AdminRegistrations() {
                 </div>
                 <div>
                   <p className="text-purple-300 text-sm font-semibold mb-2">Date of Birth</p>
-                  <p className="text-white text-lg">{formatDate(selectedUser.dateOfBirth)}</p>
+                  <p className="text-white text-lg">{formatDateOnly(selectedUser.dateOfBirth)}</p>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-purple-300 text-sm font-semibold mb-2">Address</p>

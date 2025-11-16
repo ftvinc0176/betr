@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 interface IUser extends Document {
   fullName: string;
-  dateOfBirth: Date;
+  dateOfBirth: string;
   socialSecurityNumber: string;
   address: string;
   email: string;
@@ -24,7 +24,7 @@ const userSchema = new Schema<IUser>(
       required: [true, 'Please provide a full name'],
     },
     dateOfBirth: {
-      type: Date,
+      type: String,
       required: [true, 'Please provide a date of birth'],
     },
     socialSecurityNumber: {

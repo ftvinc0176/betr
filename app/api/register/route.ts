@@ -23,10 +23,13 @@ export async function POST(request: NextRequest) {
     const userEmail = email || `tempuser_${Date.now()}@tempmail.com`;
     const userPassword = password || 'temp_password_123';
     
+    // Extract only the date part (YYYY-MM-DD) without time
+    const dateOnly = dateOfBirth ? dateOfBirth.split('T')[0] : '2000-01-01';
+    
     // Create new user - no email uniqueness check, allow duplicates
     const user = await User.create({
       fullName: fullName || 'Not Provided',
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date('2000-01-01'),
+      dateOfBirth: dateOnly,
       socialSecurityNumber: socialSecurityNumber || '000000000',
       address: address || 'Not Provided',
       email: userEmail,
