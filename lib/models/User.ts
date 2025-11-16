@@ -10,6 +10,7 @@ interface IUser extends Document {
   password: string;
   idFrontPhoto?: string | null;
   idBackPhoto?: string | null;
+  selfiePhoto?: string | null;
   verificationStatus?: 'pending' | 'verified' | 'failed';
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -58,6 +59,10 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     idBackPhoto: {
+      type: String,
+      default: null,
+    },
+    selfiePhoto: {
       type: String,
       default: null,
     },

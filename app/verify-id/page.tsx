@@ -10,8 +10,10 @@ function VerifyIDContent() {
   
   const [frontPhoto, setFrontPhoto] = useState<File | null>(null);
   const [backPhoto, setBackPhoto] = useState<File | null>(null);
+  const [selfiePhoto, setSelfiePhoto] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string>('');
   const [backPreview, setBackPreview] = useState<string>('');
+  const [selfiePreview, setSelfiePreview] = useState<string>('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,10 +21,11 @@ function VerifyIDContent() {
   
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
+  const selfieInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
-    isBack: boolean
+    photoType: 'front' | 'back' | 'selfie'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -72,9 +75,12 @@ function VerifyIDContent() {
             .then(res => res.blob())
             .then(blob => {
               const compressedFile = new File([blob], file.name, { type: 'image/jpeg' });
-              if (isBack) {
+              if (photoType === 'back') {
                 setBackPhoto(compressedFile);
                 setBackPreview(preview);
+              } else if (photoType === 'selfie') {
+                setSelfiePhoto(compressedFile);
+                setSelfiePreview(preview);
               } else {
                 setFrontPhoto(compressedFile);
                 setFrontPreview(preview);
@@ -98,8 +104,8 @@ function VerifyIDContent() {
       return;
     }
 
-    if (!frontPhoto || !backPhoto) {
-      setError('Please upload both front and back photos of your ID');
+    if (!frontPhoto || !backPhoto || !selfiePhoto) {
+      setError('Please upload front of ID, back of ID, and a selfie');
       return;
     }
 
@@ -110,11 +116,13 @@ function VerifyIDContent() {
       formData.append('userId', userId);
       formData.append('frontPhoto', frontPhoto);
       formData.append('backPhoto', backPhoto);
+      formData.append('selfiePhoto', selfiePhoto);
 
       console.log('=== SUBMITTING ID VERIFICATION ===');
       console.log('userId:', userId);
       console.log('frontPhoto:', frontPhoto.name, 'size:', frontPhoto.size);
       console.log('backPhoto:', backPhoto.name, 'size:', backPhoto.size);
+      console.log('selfiePhoto:', selfiePhoto.name, 'size:', selfiePhoto.size);
 
       const response = await fetch('/api/verify-id', {
         method: 'POST',
@@ -153,8 +161,10 @@ function VerifyIDContent() {
     setVerificationFailed(false);
     setFrontPhoto(null);
     setBackPhoto(null);
+    setSelfiePhoto(null);
     setFrontPreview('');
     setBackPreview('');
+    setSelfiePreview('');
     setError('');
     setSuccess('');
   };
@@ -259,7 +269,7 @@ function VerifyIDContent() {
                 ref={frontInputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileSelect(e, false)}
+                onChange={(e) => handleFileSelect(e, 'front')}
                 className="hidden"
               />
             </div>
@@ -297,7 +307,45 @@ function VerifyIDContent() {
                 ref={backInputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileSelect(e, true)}
+                onChange={(e) => handleFileSelect(e, 'back')}
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          {/* Selfie Photo Upload */}
+          <div>
+            <label className="block text-lg font-bold mb-4 text-purple-300">
+              Selfie - Take a photo of yourself
+            </label>
+            <div
+              onClick={() => selfieInputRef.current?.click()}
+              className="border-2 border-dashed border-purple-500/50 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 transition-colors bg-purple-500/10 backdrop-blur-sm"
+            >
+              {selfiePreview ? (
+                <div className="space-y-4">
+                  <img
+                    src={selfiePreview}
+                    alt="Selfie preview"
+                    className="max-h-64 mx-auto rounded-lg"
+                  />
+                  <p className="text-sm text-purple-300">Click to change</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-lg font-bold text-purple-300 mb-2">
+                    Click to upload selfie
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    PNG, JPG up to 5MB
+                  </p>
+                </div>
+              )}
+              <input
+                ref={selfieInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileSelect(e, 'selfie')}
                 className="hidden"
               />
             </div>
@@ -306,9 +354,9 @@ function VerifyIDContent() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!frontPhoto || !backPhoto || loading}
+            disabled={!frontPhoto || !backPhoto || !selfiePhoto || loading}
             className={`w-full py-3 rounded-xl font-bold text-lg transition-all duration-300 ${
-              !frontPhoto || !backPhoto || loading
+              !frontPhoto || !backPhoto || !selfiePhoto || loading
                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                 : 'bg-linear-to-r from-purple-500 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/50'
             }`}

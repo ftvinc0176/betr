@@ -14,6 +14,7 @@ interface User {
   verificationStatus: string;
   idFrontPhoto: string;
   idBackPhoto: string;
+  selfiePhoto: string;
   createdAt: string;
 }
 
@@ -259,11 +260,11 @@ export default function AdminRegistrations() {
                 </div>
               </div>
 
-              {/* ID Photos */}
-              {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto) && (
+              {/* ID Photos and Selfie */}
+              {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
                 <div className="border-t border-purple-500/30 pt-8">
-                  <h3 className="text-2xl font-bold text-white mb-6">ID Verification Photos</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <h3 className="text-2xl font-bold text-white mb-6">Verification Photos</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {selectedUser.idFrontPhoto && (
                       <div>
                         <p className="text-purple-300 text-sm font-semibold mb-3">Front of ID</p>
@@ -280,6 +281,16 @@ export default function AdminRegistrations() {
                         <img
                           src={selectedUser.idBackPhoto}
                           alt="Back of ID"
+                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
+                        />
+                      </div>
+                    )}
+                    {selectedUser.selfiePhoto && (
+                      <div>
+                        <p className="text-purple-300 text-sm font-semibold mb-3">Selfie</p>
+                        <img
+                          src={selectedUser.selfiePhoto}
+                          alt="Selfie"
                           className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
                         />
                       </div>
