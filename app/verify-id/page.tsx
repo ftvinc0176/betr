@@ -197,7 +197,6 @@ function VerifyIDContent() {
           >
             Sign In
           </button>
-        </div>
       </div>
     </div>
     );
