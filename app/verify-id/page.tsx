@@ -36,9 +36,9 @@ function VerifyIDContent() {
       return;
     }
 
-    // Validate file size (max 2MB before compression)
-    if (file.size > 2 * 1024 * 1024) {
-      setError('File size must be less than 2MB');
+    // Validate file size (max 5MB before compression)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
       return;
     }
 
