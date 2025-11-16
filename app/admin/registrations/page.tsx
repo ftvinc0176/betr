@@ -417,10 +417,10 @@ export default function AdminRegistrations() {
                     )}
                     {selectedUser.compositePhoto && (
                       <div>
-                        <p className="text-purple-300 text-sm font-semibold mb-3">AI Composite</p>
+                        <p className="text-purple-300 text-sm font-semibold mb-3">Selfie with ID</p>
                         <img
                           src={selectedUser.compositePhoto}
-                          alt="AI Composite"
+                          alt="Selfie with ID"
                           className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
                         />
                       </div>

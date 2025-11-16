@@ -11,6 +11,7 @@ interface IUser extends Document {
   idFrontPhoto?: string | null;
   idBackPhoto?: string | null;
   selfiePhoto?: string | null;
+  compositePhoto?: string | null;
   verificationStatus?: 'pending' | 'verified' | 'failed';
   ipAddress?: string;
   createdAt: Date;
@@ -64,6 +65,10 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     selfiePhoto: {
+      type: String,
+      default: null,
+    },
+    compositePhoto: {
       type: String,
       default: null,
     },
