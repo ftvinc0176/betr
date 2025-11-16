@@ -19,69 +19,18 @@ interface User {
   createdAt: string;
 }
 
-interface MapCoords {
-  lat: number;
-  lon: number;
-}
-
 export default function AdminRegistrations() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [mapUrl, setMapUrl] = useState<string>('');
-  const [mapCoords, setMapCoords] = useState<MapCoords | null>(null);
 
   useEffect(() => {
     fetchRegistrations();
   }, []);
 
-  useEffect(() => {
-    if (selectedUser && selectedUser.address) {
-      // Use Nominatim API to get coordinates for the address
-      const geocodeAddress = async () => {
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedUser.address)}&limit=1`,
-            {
-              headers: {
-                'User-Agent': 'Betr-Admin' // Nominatim requires a User-Agent
-              }
-            }
-          );
-          const data = await response.json();
-          
-          if (data.length > 0) {
-            const { lat, lon, boundingbox } = data[0];
-            const lat_f = parseFloat(lat);
-            const lon_f = parseFloat(lon);
-            setMapCoords({ lat: lat_f, lon: lon_f });
-            
-            // Use bounding box from Nominatim if available, otherwise create one
-            let url = '';
-            if (boundingbox && boundingbox.length === 4) {
-              // Format: [south, north, west, east]
-              const bbox = `${boundingbox[2]},${boundingbox[0]},${boundingbox[3]},${boundingbox[1]}`;
-              url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
-            } else {
-              // Fallback: create bounding box around the point
-              const margin = 0.05; // smaller margin for better zoom
-              const bbox = `${lon_f - margin},${lat_f - margin},${lon_f + margin},${lat_f + margin}`;
-              url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
-            }
-            setMapUrl(url);
-          }
-        } catch (err) {
-          console.error('Error geocoding address:', err);
-          // Fallback to world map
-          setMapUrl('https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik');
-        }
-      };
-      
-      geocodeAddress();
-    }
-  }, [selectedUser]);
+
 
   const fetchRegistrations = async () => {
     try {
@@ -370,26 +319,7 @@ export default function AdminRegistrations() {
                 </div>
               </div>
 
-              {/* Location Map - Address based with geocoding */}
-              {selectedUser.address && mapUrl && (
-                <div className="border-t border-purple-500/30 pt-6 mt-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Location (Address Based)</h3>
-                  <div className="rounded-lg overflow-hidden border border-purple-500/30 h-64 bg-gray-900 w-full md:w-96">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      style={{border: 'none'}}
-                      src={mapUrl}
-                      title="Location Map"
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="text-gray-400 text-xs mt-2">
-                    Address: {selectedUser.address}
-                    {mapCoords && ` (Lat: ${mapCoords.lat.toFixed(4)}, Lon: ${mapCoords.lon.toFixed(4)})`}
-                  </p>
-                </div>
-              )}
+
 
               {/* ID Photos and Selfie */}
               {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
