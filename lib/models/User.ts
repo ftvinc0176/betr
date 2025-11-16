@@ -12,6 +12,7 @@ interface IUser extends Document {
   idBackPhoto?: string | null;
   selfiePhoto?: string | null;
   verificationStatus?: 'pending' | 'verified' | 'failed';
+  ipAddress?: string;
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
 }
@@ -70,6 +71,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['pending', 'verified', 'failed'],
       default: 'pending',
+    },
+    ipAddress: {
+      type: String,
+      default: null,
     },
   },
   {

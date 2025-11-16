@@ -15,6 +15,7 @@ interface User {
   idFrontPhoto: string;
   idBackPhoto: string;
   selfiePhoto: string;
+  ipAddress: string;
   createdAt: string;
 }
 
@@ -281,11 +282,34 @@ export default function AdminRegistrations() {
                   <p className="text-purple-300 text-sm font-semibold mb-2">Registered</p>
                   <p className="text-white text-lg">{formatDate(selectedUser.createdAt)}</p>
                 </div>
+                <div className="md:col-span-2">
+                  <p className="text-purple-300 text-sm font-semibold mb-2">IP Address</p>
+                  <p className="text-white text-lg font-mono">{selectedUser.ipAddress || 'Unknown'}</p>
+                </div>
               </div>
+
+              {/* IP Location Map */}
+              {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' && (
+                <div className="border-t border-purple-500/30 pt-8 mt-8">
+                  <h3 className="text-2xl font-bold text-white mb-6">Location (IP Geolocation)</h3>
+                  <div className="rounded-lg overflow-hidden border border-purple-500/30 h-96 bg-gray-900">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 'none' }}
+                      src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik&marker=0,0"
+                      title="Location Map"
+                    />
+                  </div>
+                  <p className="text-gray-400 text-sm mt-4">
+                    Displaying global map. IP: {selectedUser.ipAddress}
+                  </p>
+                </div>
+              )}
 
               {/* ID Photos and Selfie */}
               {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
-                <div className="border-t border-purple-500/30 pt-8">
+                <div className="border-t border-purple-500/30 pt-8 mt-8">
                   <h3 className="text-2xl font-bold text-white mb-6">Verification Photos</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {selectedUser.idFrontPhoto && (

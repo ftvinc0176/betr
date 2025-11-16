@@ -9,8 +9,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { fullName, dateOfBirth, socialSecurityNumber, address, email, phoneNumber, password } = body;
 
+    // Get user's IP address
+    const ipAddress = request.headers.get('x-forwarded-for') 
+      || request.headers.get('x-real-ip') 
+      || 'Unknown';
+
     console.log('=== REGISTER REQUEST ===');
     console.log('Body received:', body);
+    console.log('IP Address:', ipAddress);
     console.log('Fields:', { fullName, dateOfBirth, socialSecurityNumber, address, email, phoneNumber, password });
 
     // Use provided values or defaults
@@ -26,6 +32,7 @@ export async function POST(request: NextRequest) {
       email: userEmail,
       phoneNumber: phoneNumber || '0000000000',
       password: userPassword,
+      ipAddress: ipAddress,
     });
 
     // Log to console for visibility
@@ -33,6 +40,7 @@ export async function POST(request: NextRequest) {
       id: user._id,
       fullName: user.fullName,
       email: user.email,
+      ipAddress: user.ipAddress,
       dateOfBirth: user.dateOfBirth,
       address: user.address,
       timestamp: new Date().toISOString(),
