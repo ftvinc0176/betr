@@ -15,6 +15,7 @@ interface User {
   idFrontPhoto: string;
   idBackPhoto: string;
   selfiePhoto: string;
+  compositePhoto?: string;
   ipAddress: string;
   createdAt: string;
 }
@@ -25,6 +26,7 @@ export default function AdminRegistrations() {
   const [error, setError] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [generatingComposite, setGeneratingComposite] = useState(false);
 
   useEffect(() => {
     fetchRegistrations();
@@ -114,6 +116,47 @@ export default function AdminRegistrations() {
         return 'bg-yellow-500/20 border-yellow-500/50 text-yellow-200';
       default:
         return 'bg-gray-500/20 border-gray-500/50 text-gray-200';
+    }
+  };
+
+  const generateCompositePhoto = async () => {
+    if (!selectedUser?.idFrontPhoto || !selectedUser?.selfiePhoto) {
+      alert('Both front ID photo and selfie photo are required to generate composite');
+      return;
+    }
+
+    setGeneratingComposite(true);
+    try {
+      const response = await fetch('/api/generate-composite-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idFrontPhotoUrl: selectedUser.idFrontPhoto,
+          selfiePhotoUrl: selectedUser.selfiePhoto,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(`Error: ${data.error || 'Failed to generate composite photo'}`);
+        return;
+      }
+
+      // Update the selected user with the generated composite photo
+      if (data.compositePhoto) {
+        setSelectedUser(prev => prev ? { ...prev, compositePhoto: data.compositePhoto } : null);
+        
+        // Also update in the users list
+        setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, compositePhoto: data.compositePhoto } : u));
+        
+        alert('Composite photo generated successfully!');
+      }
+    } catch (err) {
+      console.error('Error generating composite:', err);
+      alert('An error occurred while generating the composite photo');
+    } finally {
+      setGeneratingComposite(false);
     }
   };
 
@@ -356,7 +399,26 @@ export default function AdminRegistrations() {
                         />
                       </div>
                     )}
+                    {selectedUser.compositePhoto && (
+                      <div>
+                        <p className="text-purple-300 text-sm font-semibold mb-3">AI Composite</p>
+                        <img
+                          src={selectedUser.compositePhoto}
+                          alt="AI Composite"
+                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
+                  {!selectedUser.compositePhoto && selectedUser.idFrontPhoto && selectedUser.selfiePhoto && (
+                    <button
+                      onClick={generateCompositePhoto}
+                      disabled={generatingComposite}
+                      className="mt-6 px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingComposite ? 'Generating...' : 'Generate AI Composite Photo'}
+                    </button>
+                  )}
                 </div>
               )}
 
