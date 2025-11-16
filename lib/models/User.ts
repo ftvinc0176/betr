@@ -8,6 +8,9 @@ interface IUser extends Document {
   email: string;
   phoneNumber: string;
   password: string;
+  idFrontPhoto?: string | null;
+  idBackPhoto?: string | null;
+  verificationStatus?: 'pending' | 'verified' | 'failed';
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
 }
