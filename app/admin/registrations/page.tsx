@@ -313,23 +313,14 @@ export default function AdminRegistrations() {
                     Location ({selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? 'IP Geolocation' : 'Address Based'})
                   </h3>
                   <div className="rounded-lg overflow-hidden border border-purple-500/30 h-64 bg-gray-900 w-full md:w-96">
-                    {selectedUser.address && !selectedUser.ipAddress ? (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 'none' }}
-                        src={`https://www.openstreetmap.org/export/embed.html?query=${encodeURIComponent(selectedUser.address)}&bbox=auto`}
-                        title="Location Map"
-                      />
-                    ) : (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 'none' }}
-                        src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik"
-                        title="Location Map"
-                      />
-                    )}
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 'none' }}
+                      src="https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik"
+                      title="Location Map"
+                      loading="lazy"
+                    />
                   </div>
                   <p className="text-gray-400 text-xs mt-2">
                     {selectedUser.ipAddress && selectedUser.ipAddress !== 'Unknown' ? (
