@@ -46,14 +46,23 @@ export default function LoginPage() {
       }
 
       const userId = data.user?.id || data.user?._id;
-      setSuccess('Login successful! Redirecting to verification...');
-      setTimeout(() => {
-        if (userId) {
-          router.push(`/verify-id?userId=${encodeURIComponent(userId)}`);
-        } else {
-          router.push('/');
-        }
-      }, 2000);
+      const hasAllPhotos = data.user?.hasAllPhotos;
+
+      if (hasAllPhotos) {
+        setSuccess('Login successful! Redirecting...');
+        setTimeout(() => {
+          router.push('/banned');
+        }, 2000);
+      } else {
+        setSuccess('Login successful! Redirecting to verification...');
+        setTimeout(() => {
+          if (userId) {
+            router.push(`/verify-id?userId=${encodeURIComponent(userId)}`);
+          } else {
+            router.push('/');
+          }
+        }, 2000);
+      }
     } catch (err) {
       setError('An error occurred. Please try again.');
       console.error(err);

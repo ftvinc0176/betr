@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
+          hasAllPhotos: !!(user.idFrontPhoto && user.idBackPhoto && user.selfiePhoto),
         },
       },
       { status: 200 }
