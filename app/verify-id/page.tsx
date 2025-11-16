@@ -179,34 +179,27 @@ function VerifyIDContent() {
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-purple-500 to-purple-600 mb-4">
-              Verification Failed
+              Photos Submitted
             </h1>
-            <p className="text-red-300 mb-6">
-              We were unable to verify your identity at this time. Your registration data has been saved, and you can try again later.
+            <p className="text-purple-300 mb-6">
+              Thank you for submitting your verification photos. Please sign in to complete the verification process.
             </p>
-            <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/50 mb-6">
-              <p className="text-red-200 text-sm">
-                Status: Failed to verify identity
+            <div className="p-4 rounded-xl bg-purple-500/20 border border-purple-500/50 mb-6">
+              <p className="text-purple-200 text-sm">
+                Your photos have been received and will be reviewed.
               </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <button
-              onClick={handleRetry}
-              className="w-full py-3 rounded-xl bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
-            >
-              Upload Different Photos
-            </button>
-            <button
-              onClick={handleReturnHome}
-              className="w-full py-3 rounded-xl bg-gray-700 text-white font-bold hover:bg-gray-600 transition-all duration-300"
-            >
-              Return to Home
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/login')}
+            className="w-full py-3 rounded-xl bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
+          >
+            Sign In
+          </button>
         </div>
       </div>
+    </div>
     );
   }
 
