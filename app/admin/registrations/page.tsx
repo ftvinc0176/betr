@@ -24,7 +24,7 @@ export default function AdminRegistrations() {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch('/api/admin/registrations');
+      const response = await fetch('/api/admin/registrations', { cache: 'no-store' });
       const data = await response.json();
 
       console.log('Fetch response:', {
