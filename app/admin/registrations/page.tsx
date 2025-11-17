@@ -18,6 +18,11 @@ interface User {
   compositePhoto?: string;
   ipAddress: string;
   createdAt: string;
+  supportMessages?: Array<{
+    sender: 'user' | 'support';
+    message: string;
+    timestamp: string;
+  }>;
 }
 
 export default function AdminRegistrations() {
@@ -30,9 +35,27 @@ export default function AdminRegistrations() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [showSupportChat, setShowSupportChat] = useState(false);
+  const [supportMessages, setSupportMessages] = useState<Array<{
+    sender: 'user' | 'support';
+    message: string;
+    timestamp: string;
+  }>>([]);
+  const [supportMessageInput, setSupportMessageInput] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [userMessagesCount, setUserMessagesCount] = useState<Record<string, number>>({});
+  const [notification, setNotification] = useState<{ userId: string; userName: string } | null>(null);
 
   useEffect(() => {
     fetchRegistrations();
+    
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(() => {
+      checkForNewMessages();
+    }, 3000);
+    
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -243,6 +266,72 @@ export default function AdminRegistrations() {
     }
   };
 
+  const checkForNewMessages = async () => {
+    try {
+      const response = await fetch('/api/admin/registrations');
+      const data = await response.json();
+      const usersList = data.users || [];
+
+      // Track message counts and detect new messages
+      usersList.forEach((user: User) => {
+        const previousCount = userMessagesCount[user._id] || 0;
+        const currentCount = (user.supportMessages || []).filter(
+          (m: { sender: string; message: string; timestamp: string }) => m.sender === 'user'
+        ).length;
+
+        if (currentCount > previousCount && previousCount > 0) {
+          // New message detected - show notification
+          setNotification({ userId: user._id, userName: user.fullName });
+          setTimeout(() => setNotification(null), 5000);
+        }
+
+        setUserMessagesCount(prev => ({
+          ...prev,
+          [user._id]: currentCount,
+        }));
+      });
+    } catch (error) {
+      console.error('Error checking for messages:', error);
+    }
+  };
+
+  const fetchSupportMessages = async () => {
+    if (!selectedUser?._id) return;
+    
+    setLoadingMessages(true);
+    try {
+      const response = await fetch(`/api/support-messages?userId=${selectedUser._id}`);
+      const data = await response.json();
+      setSupportMessages(data.messages || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const sendSupportChatMessage = async () => {
+    if (!supportMessageInput.trim() || !selectedUser?._id) return;
+
+    try {
+      await fetch('/api/support-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          sender: 'support',
+          message: supportMessageInput,
+        }),
+      });
+
+      setSupportMessageInput('');
+      // Refresh messages
+      await fetchSupportMessages();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white flex items-center justify-center">
@@ -256,6 +345,24 @@ export default function AdminRegistrations() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white px-4 py-12">
+      {/* Notification Alert */}
+      {notification && (
+        <div className="fixed top-4 right-4 bg-linear-to-r from-blue-500 to-blue-600 border border-blue-400 rounded-lg px-6 py-4 text-white shadow-lg shadow-blue-500/50 z-50 max-w-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="font-bold text-sm">New Message</p>
+              <p className="text-xs opacity-90 mt-1">{notification.userName} sent you a message</p>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="text-white hover:opacity-70 transition-all"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -474,8 +581,73 @@ export default function AdminRegistrations() {
                 </div>
               )}
 
+              {/* Chat Display Section */}
+              {showSupportChat && (
+                <div className="mt-8 border border-purple-500/30 rounded-lg p-6 bg-black/40">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-white">Message History</h3>
+                    <button
+                      onClick={() => setShowSupportChat(false)}
+                      className="text-gray-400 hover:text-white transition-all"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="bg-black/30 rounded-lg p-4 mb-4 h-64 overflow-y-auto border border-purple-500/20">
+                    {loadingMessages ? (
+                      <p className="text-gray-400 text-center py-8">Loading messages...</p>
+                    ) : supportMessages.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No messages yet</p>
+                    ) : (
+                      supportMessages.map((msg, idx) => (
+                        <div key={idx} className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={`max-w-xs px-4 py-2 rounded-lg ${
+                              msg.sender === 'user'
+                                ? 'bg-purple-600/60 text-white'
+                                : 'bg-blue-600/60 text-white'
+                            }`}
+                          >
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {new Date(msg.timestamp).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <textarea
+                      value={supportMessageInput}
+                      onChange={(e) => setSupportMessageInput(e.target.value)}
+                      placeholder="Type a reply..."
+                      className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 resize-none h-20"
+                    />
+                    <button
+                      onClick={sendSupportChatMessage}
+                      disabled={!supportMessageInput.trim()}
+                      className="px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    setShowSupportChat(true);
+                    fetchSupportMessages();
+                  }}
+                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-green-500 to-green-600 text-white font-bold hover:shadow-lg hover:shadow-green-500/50 transition-all"
+                >
+                  View Support Chat
+                </button>
                 <button
                   onClick={() => setShowMessageModal(true)}
                   className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all"
