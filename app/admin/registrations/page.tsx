@@ -27,6 +27,9 @@ export default function AdminRegistrations() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     fetchRegistrations();
@@ -204,6 +207,39 @@ export default function AdminRegistrations() {
     } catch (err) {
       setError('An error occurred while deleting user');
       console.error(err);
+    }
+  };
+
+  const handleSendSupportMessage = async () => {
+    if (!selectedUser || !supportMessage.trim()) {
+      return;
+    }
+
+    setSendingMessage(true);
+    try {
+      const response = await fetch('/api/support-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          message: supportMessage.trim(),
+          sender: 'support',
+        }),
+      });
+
+      if (response.ok) {
+        setSupportMessage('');
+        setShowMessageModal(false);
+        alert('Support message sent successfully!');
+      } else {
+        const data = await response.json();
+        alert(`Error: ${data.error || 'Failed to send message'}`);
+      }
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Error sending support message');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -438,12 +474,55 @@ export default function AdminRegistrations() {
                 </div>
               )}
 
-              {/* Close Button */}
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => setShowMessageModal(true)}
+                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all"
+                >
+                  Send Support Message
+                </button>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Message Modal */}
+      {showMessageModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-linear-to-br from-black via-black to-purple-900 border border-purple-500/30 rounded-2xl p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-white mb-4">Send Support Message</h2>
+            <p className="text-gray-300 mb-4">
+              Send a message to <span className="font-semibold text-purple-300">{selectedUser.fullName}</span>
+            </p>
+            <textarea
+              value={supportMessage}
+              onChange={(e) => setSupportMessage(e.target.value)}
+              placeholder="Type your message here..."
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 mb-4 h-32 resize-none"
+              disabled={sendingMessage}
+            />
+            <div className="flex gap-3">
               <button
-                onClick={() => setSelectedUser(null)}
-                className="w-full mt-8 px-6 py-3 rounded-lg bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                onClick={() => setShowMessageModal(false)}
+                disabled={sendingMessage}
+                className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white font-semibold hover:bg-gray-600 transition-all disabled:opacity-50"
               >
-                Close
+                Cancel
+              </button>
+              <button
+                onClick={handleSendSupportMessage}
+                disabled={sendingMessage || !supportMessage.trim()}
+                className="flex-1 px-4 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sendingMessage ? 'Sending...' : 'Send Message'}
               </button>
             </div>
           </div>

@@ -1,42 +1,76 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function BannedPage() {
+function BannedContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
+
+  const handleContactSupport = () => {
+    if (userId) {
+      router.push(`/support?userId=${userId}`);
+    }
+  };
 
   const handleReturnHome = () => {
     router.push('/');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-black via-black to-purple-900 text-white flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
-          <h1 className="text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-red-400 via-red-500 to-red-600 mb-4">
-            Account Banned
+          <h1 className="text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-yellow-500 to-yellow-600 mb-4">
+            Account Suspended
           </h1>
-          <p className="text-red-300 text-lg font-semibold mb-6">
-            Your account has been banned from Betr
+          <p className="text-yellow-300 text-lg font-semibold mb-6">
+            Your account has been temporarily suspended
           </p>
         </div>
 
-        <div className="p-6 rounded-xl bg-red-500/20 border border-red-500/50 mb-8">
-          <p className="text-red-200 mb-4">
-            Your account does not meet our compliance requirements and has been permanently suspended.
+        <div className="p-6 rounded-xl bg-yellow-500/20 border border-yellow-500/50 mb-8">
+          <p className="text-yellow-200 mb-4">
+            Your account is temporarily suspended while we review your information.
           </p>
-          <p className="text-red-200 text-sm">
-            If you believe this is an error, please contact our support team for assistance.
+          <p className="text-yellow-200 text-sm">
+            This is a routine security measure. Please contact our support team to learn more and get your account reactivated.
           </p>
         </div>
 
-        <button
-          onClick={handleReturnHome}
-          className="w-full py-3 rounded-xl bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
-        >
-          Return to Home
-        </button>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleContactSupport}
+            disabled={!userId}
+            className="w-full py-3 rounded-xl bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Message Support
+          </button>
+          <button
+            onClick={handleReturnHome}
+            className="w-full py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-all duration-300"
+          >
+            Return to Home
+          </button>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function BannedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-linear-to-br from-black via-black to-purple-900 text-white flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold">Loading...</h1>
+          </div>
+        </div>
+      }
+    >
+      <BannedContent />
+    </Suspense>
   );
 }

@@ -14,6 +14,12 @@ interface IUser extends Document {
   compositePhoto?: string | null;
   verificationStatus?: 'pending' | 'verified' | 'failed';
   ipAddress?: string;
+  supportMessages?: Array<{
+    id: string;
+    sender: 'user' | 'support';
+    message: string;
+    timestamp: Date;
+  }>;
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
 }
@@ -80,6 +86,23 @@ const userSchema = new Schema<IUser>(
     ipAddress: {
       type: String,
       default: null,
+    },
+    supportMessages: {
+      type: [
+        {
+          id: String,
+          sender: {
+            type: String,
+            enum: ['user', 'support'],
+          },
+          message: String,
+          timestamp: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
     },
   },
   {
