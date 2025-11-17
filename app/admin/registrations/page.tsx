@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from 'react';
 
+interface SupportMessage {
+  sender: 'user' | 'support';
+  message: string;
+  timestamp: string;
+  agentName?: string;
+}
+
 interface User {
   _id: string;
   fullName: string;
@@ -9,117 +16,205 @@ interface User {
   phoneNumber: string;
   verificationStatus: string;
   createdAt: string;
+  supportMessages?: SupportMessage[];
 }
 
 export default function AdminRegistrations() {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [chatMessages, setChatMessages] = useState<SupportMessage[]>([]);
+  const [messageInput, setMessageInput] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    const interval = setInterval(fetchUsers, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      setError('');
       const response = await fetch('/api/admin/registrations', { cache: 'no-store' });
       const data = await response.json();
-
-      console.log('Fetch response:', {
-        ok: response.ok,
-        status: response.status,
-        data: data,
-      });
-
       if (response.ok && data.users) {
-        console.log('Setting users:', data.users.length);
         setUsers(data.users);
-      } else {
-        console.log('Response not ok or no users');
-        setError(data.error || `Failed to fetch users (status: ${response.status})`);
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('An error occurred while fetching users');
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (loading) {
+  const selectUser = (user: User) => {
+    setSelectedUser(user);
+    setChatMessages(user.supportMessages || []);
+  };
+
+  const sendMessage = async () => {
+    if (!messageInput.trim() || !selectedUser) return;
+
+    setSendingMessage(true);
+    try {
+      const response = await fetch('/api/support-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          sender: 'support',
+          message: messageInput.trim(),
+          agentName: 'Emily from Betr',
+        }),
+      });
+
+      if (response.ok) {
+        setMessageInput('');
+        await fetchUsers();
+        const updated = users.find(u => u._id === selectedUser._id);
+        if (updated) {
+          setSelectedUser(updated);
+          setChatMessages(updated.supportMessages || []);
+        }
+      }
+    } catch (err) {
+      console.error('Send error:', err);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const getUnseenCount = (user: User) => {
+    return (user.supportMessages || []).filter(m => m.sender === 'user').length;
+  };
+
+  if (!users.length) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Loading...</h1>
-          <p className="text-gray-400">Fetching registrations...</p>
+          <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold">Loading Dashboard</h1>
+          <p className="text-gray-400 mt-2">Connecting to database...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white">
+      <div className="grid grid-cols-3 gap-6 p-8 max-w-7xl mx-auto">
+        {/* Users List */}
+        <div className="col-span-1">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-400 px-6 py-4">
+              <h2 className="text-xl font-bold">User Registrations</h2>
+              <p className="text-purple-100 text-sm">{users.length} users</p>
+            </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/30 border border-red-500 rounded-lg">
-            <p className="text-red-400">{error}</p>
-            <button
-              onClick={fetchUsers}
-              className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        <div className="bg-gray-900 rounded-lg border border-gray-700">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="px-6 py-3 text-left">Name</th>
-                <th className="px-6 py-3 text-left">Email</th>
-                <th className="px-6 py-3 text-left">Phone</th>
-                <th className="px-6 py-3 text-left">Status</th>
-                <th className="px-6 py-3 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
+            <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
               {users.map((user) => (
-                <tr
+                <button
                   key={user._id}
-                  className="border-b border-gray-700 hover:bg-gray-800/50"
+                  onClick={() => selectUser(user)}
+                  className={`w-full px-6 py-4 border-b border-gray-800 text-left transition ${
+                    selectedUser?._id === user._id
+                      ? 'bg-purple-500/20 border-l-4 border-l-purple-500'
+                      : 'hover:bg-gray-800/50'
+                  }`}
                 >
-                  <td className="px-6 py-4">{user.fullName}</td>
-                  <td className="px-6 py-4">{user.email}</td>
-                  <td className="px-6 py-4">{user.phoneNumber}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded text-sm ${
-                        user.verificationStatus === 'banned'
-                          ? 'bg-red-900 text-red-200'
-                          : user.verificationStatus === 'verified'
-                            ? 'bg-green-900 text-green-200'
-                            : 'bg-yellow-900 text-yellow-200'
-                      }`}
-                    >
-                      {user.verificationStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{user.fullName}</p>
+                      <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                      <div className="flex gap-2 mt-1 items-center">
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            user.verificationStatus === 'banned'
+                              ? 'bg-red-900/50 text-red-300'
+                              : user.verificationStatus === 'verified'
+                                ? 'bg-green-900/50 text-green-300'
+                                : 'bg-yellow-900/50 text-yellow-300'
+                          }`}
+                        >
+                          {user.verificationStatus}
+                        </span>
+                        {getUnseenCount(user) > 0 && (
+                          <span className="text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                            {getUnseenCount(user)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+        </div>
 
-          {users.length === 0 && !error && (
-            <div className="p-8 text-center text-gray-400">
-              No registrations yet.
+        {/* Chat Panel */}
+        <div className="col-span-2">
+          {selectedUser ? (
+            <div className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl overflow-hidden flex flex-col h-[calc(100vh-100px)]">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-purple-400 px-6 py-4 border-b border-purple-500/30">
+                <h3 className="text-xl font-bold">{selectedUser.fullName}</h3>
+                <p className="text-purple-100 text-sm">{selectedUser.email}</p>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {chatMessages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <p>No messages yet. Start a conversation.</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex ${msg.sender === 'support' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs rounded-lg px-4 py-3 ${
+                          msg.sender === 'support'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-800 text-gray-100'
+                        }`}
+                      >
+                        <p className="text-xs font-semibold mb-1">
+                          {msg.sender === 'support' ? 'Emily from Betr' : 'User'}
+                        </p>
+                        <p className="break-words">{msg.message}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Input */}
+              <div className="border-t border-gray-800 p-4 bg-black/50">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={sendingMessage || !messageInput.trim()}
+                    className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-lg transition"
+                  >
+                    {sendingMessage ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl flex items-center justify-center h-[calc(100vh-100px)]">
+              <p className="text-gray-500">Select a user to start chatting</p>
             </div>
           )}
         </div>
