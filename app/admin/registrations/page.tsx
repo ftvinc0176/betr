@@ -27,14 +27,22 @@ export default function AdminRegistrations() {
       const response = await fetch('/api/admin/registrations');
       const data = await response.json();
 
-      if (response.ok) {
-        setUsers(data.users || []);
+      console.log('Fetch response:', {
+        ok: response.ok,
+        status: response.status,
+        data: data,
+      });
+
+      if (response.ok && data.users) {
+        console.log('Setting users:', data.users.length);
+        setUsers(data.users);
       } else {
-        setError(data.error || 'Failed to fetch users');
+        console.log('Response not ok or no users');
+        setError(data.error || `Failed to fetch users (status: ${response.status})`);
       }
     } catch (err) {
+      console.error('Fetch error:', err);
       setError('An error occurred while fetching users');
-      console.error(err);
     } finally {
       setLoading(false);
     }
