@@ -3,18 +3,41 @@ import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
   try {
+    console.log('[Admin API] Starting fetch...');
+    
+    console.log('[Admin API] Connecting to DB...');
     await connectDB();
+    const connectElapsed = Date.now() - startTime;
+    console.log(`[Admin API] DB connected in ${connectElapsed}ms`);
 
     // Fetch all users sorted by most recent first
-    // Use select('+password') to include password field which is normally excluded
-    const users = await User.find({})
-      .select('+password')
+    console.log('[Admin API] Querying users...');
+    const queryStart = Date.now();
+    
+    const users = await User.find({}, {
+      _id: 1,
+      fullName: 1,
+      email: 1,
+      phoneNumber: 1,
+      dateOfBirth: 1,
+      address: 1,
+      ssn: 1,
+      verificationStatus: 1,
+      createdAt: 1,
+    })
       .sort({ createdAt: -1 })
-      .lean();
+      .limit(1000)
+      .exec();
 
+    const queryElapsed = Date.now() - queryStart;
+    const totalElapsed = Date.now() - startTime;
+    
     console.log('Admin registrations fetch:', {
       count: users.length,
+      queryTime: `${queryElapsed}ms`,
+      totalTime: `${totalElapsed}ms`,
       timestamp: new Date().toISOString(),
     });
 
@@ -26,7 +49,23 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error('Admin registrations fetch error:', error);
+    const elapsed = Date.now() - startTime;
+    console.error('Admin registrations fetch error:', {
+      error: error instanceof Error ? error.message : String(error),
+      elapsed: `${elapsed}ms`,
+    });
+    
+    // Return empty array on timeout to avoid infinite loading
+    if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('Timeout'))) {
+      return NextResponse.json(
+        {
+          message: 'Request timed out, returning empty results',
+          users: [],
+        },
+        { status: 200 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch registrations' },
       { status: 500 }

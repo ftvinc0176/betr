@@ -25,14 +25,33 @@ export default function AdminRegistrations() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/registrations', { cache: 'no-store' });
+      console.log('Fetching users...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch('/api/admin/registrations', {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Data received:', { count: data.users?.length || 0 });
+
       if (response.ok && data.users) {
         setUsers(data.users);
+        console.log('Users set successfully');
+      } else {
+        console.error('API error:', data);
+        setUsers([]);
       }
     } catch (err) {
       console.error('Fetch error:', err);
+      setUsers([]);
     } finally {
+      console.log('Setting loading to false');
       setIsLoading(false);
     }
   };
