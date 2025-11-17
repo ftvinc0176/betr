@@ -7,795 +7,115 @@ interface User {
   fullName: string;
   email: string;
   phoneNumber: string;
-  dateOfBirth: string;
-  address: string;
-  socialSecurityNumber: string;
-  password: string;
   verificationStatus: string;
-  idFrontPhoto: string;
-  idBackPhoto: string;
-  selfiePhoto: string;
-  compositePhoto?: string;
-  ipAddress: string;
   createdAt: string;
-  supportMessages?: Array<{
-    sender: 'user' | 'support';
-    message: string;
-    timestamp: string;
-    agentName?: string;
-  }>;
 }
 
 export default function AdminRegistrations() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [generatingComposite, setGeneratingComposite] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [supportMessage, setSupportMessage] = useState('');
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [showSupportChat, setShowSupportChat] = useState(false);
-  const [supportMessages, setSupportMessages] = useState<Array<{
-    sender: 'user' | 'support';
-    message: string;
-    timestamp: string;
-  }>>([]);
-  const [supportMessageInput, setSupportMessageInput] = useState('');
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [userMessagesCount, setUserMessagesCount] = useState<Record<string, number>>({});
-  const [notification, setNotification] = useState<{ userId: string; userName: string } | null>(null);
 
   useEffect(() => {
-    fetchRegistrations();
-    
-    // Poll for new messages every 3 seconds
-    const interval = setInterval(() => {
-      checkForNewMessages();
-    }, 3000);
-    
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchUsers();
   }, []);
 
-
-
-  const fetchRegistrations = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch('/api/admin/registrations');
       const data = await response.json();
 
       if (response.ok) {
         setUsers(data.users || []);
       } else {
-        setError(data.error || 'Failed to fetch registrations');
+        setError(data.error || 'Failed to fetch users');
       }
     } catch (err) {
-      setError('An error occurred while fetching registrations');
+      setError('An error occurred while fetching users');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDateOnly = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    
-    // Handle YYYY-MM-DD format directly
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const [year, month, day] = dateString.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
-      }
-    }
-    
-    // Fallback for other formats
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-    
-    return 'Invalid Date';
-  };
-
-  const formatPhoneNumber = (phone: string): string => {
-    // Remove all non-digits
-    const cleaned = phone.replace(/\D/g, '');
-    // Format as (XXX) XXX-XXXX
-    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-  };
-
-  const formatSSN = (ssn: string): string => {
-    // Remove all non-digits
-    const cleaned = ssn.replace(/\D/g, '');
-    // Format as XXX-XX-XXXX
-    return cleaned.replace(/(\d{3})(\d{2})(\d{4})/, '$1-$2-$3');
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'failed':
-        return 'bg-red-500/20 border-red-500/50 text-red-200';
-      case 'verified':
-        return 'bg-green-500/20 border-green-500/50 text-green-200';
-      case 'pending':
-        return 'bg-yellow-500/20 border-yellow-500/50 text-yellow-200';
-      default:
-        return 'bg-gray-500/20 border-gray-500/50 text-gray-200';
-    }
-  };
-
-  const generateCompositePhoto = async () => {
-    if (!selectedUser?.idFrontPhoto || !selectedUser?.selfiePhoto) {
-      alert('Both front ID photo and selfie photo are required to generate composite');
-      return;
-    }
-
-    setGeneratingComposite(true);
-    try {
-      // Step 1: Generate composite using the API
-      const generateResponse = await fetch('/api/generate-composite-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idFrontPhotoUrl: selectedUser.idFrontPhoto,
-          selfiePhotoUrl: selectedUser.selfiePhoto,
-        }),
-      });
-
-      const generateData = await generateResponse.json();
-
-      if (!generateResponse.ok) {
-        alert(`Error: ${generateData.error || 'Failed to generate composite photo'}`);
-        return;
-      }
-
-      // Step 2: Save composite to database
-      if (generateData.compositePhoto) {
-        const saveResponse = await fetch('/api/admin/registrations', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: selectedUser._id,
-            compositePhoto: generateData.compositePhoto,
-          }),
-        });
-
-        const saveData = await saveResponse.json();
-
-        if (!saveResponse.ok) {
-          alert(`Error saving composite: ${saveData.error || 'Failed to save composite photo'}`);
-          return;
-        }
-
-        // Step 3: Update the UI with the saved composite
-        setSelectedUser(prev => prev ? { ...prev, compositePhoto: generateData.compositePhoto } : null);
-        setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, compositePhoto: generateData.compositePhoto } : u));
-        
-        alert('Composite photo generated and saved successfully!');
-      }
-    } catch (err) {
-      console.error('Error generating composite:', err);
-      alert('An error occurred while generating the composite photo');
-    } finally {
-      setGeneratingComposite(false);
-    }
-  };
-
-  const getUserStatus = (user: User): string => {
-    // If all 3 photos are uploaded, mark as verified
-    if (user.idFrontPhoto && user.idBackPhoto && user.selfiePhoto) {
-      return 'verified';
-    }
-    // Otherwise use the stored verification status
-    return user.verificationStatus;
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      const response = await fetch('/api/admin/registrations', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (response.ok) {
-        setUsers(users.filter(u => u._id !== userId));
-        setSelectedUser(null);
-        setDeleteConfirm(null);
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to delete user');
-      }
-    } catch (err) {
-      setError('An error occurred while deleting user');
-      console.error(err);
-    }
-  };
-
-  const handleSendSupportMessage = async () => {
-    if (!selectedUser || !supportMessage.trim()) {
-      return;
-    }
-
-    setSendingMessage(true);
-    try {
-      const response = await fetch('/api/support-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUser._id,
-          message: supportMessage.trim(),
-          sender: 'support',
-        }),
-      });
-
-      if (response.ok) {
-        setSupportMessage('');
-        setShowMessageModal(false);
-        alert('Support message sent successfully!');
-      } else {
-        const data = await response.json();
-        alert(`Error: ${data.error || 'Failed to send message'}`);
-      }
-    } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Error sending support message');
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
-  const checkForNewMessages = async () => {
-    try {
-      const response = await fetch('/api/admin/registrations');
-      const data = await response.json();
-      const usersList = data.users || [];
-
-      // Track message counts and detect new messages
-      usersList.forEach((user: User) => {
-        const previousCount = userMessagesCount[user._id] || 0;
-        const currentCount = (user.supportMessages || []).filter(
-          (m: { sender: string; message: string; timestamp: string }) => m.sender === 'user'
-        ).length;
-
-        if (currentCount > previousCount && previousCount > 0) {
-          // New message detected - show notification
-          setNotification({ userId: user._id, userName: user.fullName });
-          setTimeout(() => setNotification(null), 5000);
-        }
-
-        setUserMessagesCount(prev => ({
-          ...prev,
-          [user._id]: currentCount,
-        }));
-      });
-    } catch (error) {
-      console.error('Error checking for messages:', error);
-    }
-  };
-
-  const fetchSupportMessages = async (userId?: string) => {
-    const targetUserId = userId || selectedUser?._id;
-    if (!targetUserId) return;
-    
-    setLoadingMessages(true);
-    try {
-      const response = await fetch(`/api/support-messages?userId=${targetUserId}`);
-      const data = await response.json();
-      setSupportMessages(data.messages || []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
-
-  const sendSupportChatMessage = async () => {
-    if (!supportMessageInput.trim() || !selectedUser?._id) return;
-
-    try {
-      await fetch('/api/support-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUser._id,
-          sender: 'support',
-          message: supportMessageInput,
-        }),
-      });
-
-      setSupportMessageInput('');
-      // Refresh messages
-      await fetchSupportMessages();
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Loading...</h1>
-          <p className="text-gray-300">Fetching registrations...</p>
+          <h1 className="text-2xl font-bold mb-2">Loading...</h1>
+          <p className="text-gray-400">Fetching registrations...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-black to-purple-900 text-white px-4 py-12">
-      {/* Notification Alert */}
-      {notification && (
-        <div className="fixed top-4 right-4 bg-linear-to-r from-blue-500 to-blue-600 border border-blue-400 rounded-lg px-6 py-4 text-white shadow-lg shadow-blue-500/50 z-50 max-w-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <p className="font-bold text-sm">New Message</p>
-              <p className="text-xs opacity-90 mt-1">{notification.userName} sent you a message</p>
-            </div>
-            <button
-              onClick={() => setNotification(null)}
-              className="text-white hover:opacity-70 transition-all"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-purple-500 to-purple-600 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-purple-300 text-lg font-semibold">User Registrations & ID Verification</p>
-        </div>
+        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
         {error && (
-          <div className="mb-8 p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 backdrop-blur-sm">
-            {error}
+          <div className="mb-6 p-4 bg-red-900/30 border border-red-500 rounded-lg">
+            <p className="text-red-400">{error}</p>
+            <button
+              onClick={fetchUsers}
+              className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
+            >
+              Retry
+            </button>
           </div>
         )}
 
-        {users.length === 0 ? (
-          <div className="text-center p-12 rounded-xl backdrop-blur-md bg-white/10 border border-purple-500/30">
-            <p className="text-gray-300 text-lg">No registrations yet.</p>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
-                <p className="text-purple-300 text-sm font-semibold mb-2">Total Users</p>
-                <p className="text-3xl font-bold">{users.length}</p>
-              </div>
-              <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
-                <p className="text-purple-300 text-sm font-semibold mb-2">Failed Verification</p>
-                <p className="text-3xl font-bold text-red-400">
-                  {users.filter(u => getUserStatus(u) === 'failed').length}
-                </p>
-              </div>
-              <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
-                <p className="text-purple-300 text-sm font-semibold mb-2">Verified</p>
-                <p className="text-3xl font-bold text-green-400">
-                  {users.filter(u => getUserStatus(u) === 'verified').length}
-                </p>
-              </div>
-              <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl p-6">
-                <p className="text-purple-300 text-sm font-semibold mb-2">Pending</p>
-                <p className="text-3xl font-bold text-yellow-400">
-                  {users.filter(u => getUserStatus(u) === 'pending').length}
-                </p>
-              </div>
-            </div>
-
-            {/* Users Table */}
-            <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="border-b border-purple-500/30 bg-purple-500/10">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Email</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Phone</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Status</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Registered</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-purple-300">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-purple-500/20">
-                    {users.map((user) => (
-                      <tr key={user._id} className="hover:bg-purple-500/10 transition-colors">
-                        <td className="px-6 py-4 text-sm text-gray-200">{user.fullName}</td>
-                        <td className="px-6 py-4 text-sm text-gray-300">{user.email}</td>
-                        <td className="px-6 py-4 text-sm text-gray-300">{user.phoneNumber}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(getUserStatus(user))}`}>
-                            {getUserStatus(user)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-400">{formatDate(user.createdAt)}</td>
-                        <td className="px-6 py-4 flex gap-2">
-                          <button
-                            onClick={() => setSelectedUser(user)}
-                            className="px-3 py-1 rounded-lg bg-linear-to-r from-purple-500 to-purple-600 text-white text-xs font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setShowSupportChat(true);
-                              setTimeout(() => fetchSupportMessages(user._id), 0);
-                            }}
-                            className="px-3 py-1 rounded-lg bg-linear-to-r from-green-500 to-green-600 text-white text-xs font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all"
-                          >
-                            Messages
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(user._id)}
-                            className="px-3 py-1 rounded-lg bg-linear-to-r from-red-500 to-red-600 text-white text-xs font-semibold hover:shadow-lg hover:shadow-red-500/50 transition-all"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modal - User Details */}
-      {selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gradient-to-br from-black via-black to-purple-900 border border-purple-500/30 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-8">
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="float-right text-gray-400 hover:text-white text-2xl font-bold"
-              >
-                ✕
-              </button>
-
-              <h2 className="text-3xl font-bold text-white mb-8">User Details</h2>
-
-              {/* User Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Full Name</p>
-                  <p className="text-white text-lg">{selectedUser.fullName}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Email</p>
-                  <p className="text-white text-lg break-all">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Phone</p>
-                  <p className="text-white text-lg">{formatPhoneNumber(selectedUser.phoneNumber)}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Date of Birth</p>
-                  <p className="text-white text-lg">{formatDateOnly(selectedUser.dateOfBirth)}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Address</p>
-                  <p className="text-white text-lg">{selectedUser.address}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">SSN</p>
-                  <p className="text-white text-lg font-mono">{formatSSN(selectedUser.socialSecurityNumber)}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Password</p>
-                  <p className="text-white text-lg font-mono break-all">{selectedUser.password}</p>
-                </div>
-                <div>
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Verification Status</p>
-                  <span className={`inline-block px-4 py-2 rounded-lg text-sm font-semibold border ${getStatusColor(selectedUser.verificationStatus)}`}>
-                    {selectedUser.verificationStatus}
-                  </span>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-purple-300 text-sm font-semibold mb-2">Registered</p>
-                  <p className="text-white text-lg">{formatDate(selectedUser.createdAt)}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-purple-300 text-sm font-semibold mb-2">IP Address</p>
-                  <p className="text-white text-lg font-mono">{selectedUser.ipAddress || 'Unknown'}</p>
-                </div>
-              </div>
-
-
-
-              {/* ID Photos and Selfie */}
-              {(selectedUser.idFrontPhoto || selectedUser.idBackPhoto || selectedUser.selfiePhoto) && (
-                <div className="border-t border-purple-500/30 pt-8 mt-8">
-                  <h3 className="text-2xl font-bold text-white mb-6">Verification Photos</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {selectedUser.idFrontPhoto && (
-                      <div>
-                        <p className="text-purple-300 text-sm font-semibold mb-3">Front of ID</p>
-                        <img
-                          src={selectedUser.idFrontPhoto}
-                          alt="Front of ID"
-                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
-                        />
-                      </div>
-                    )}
-                    {selectedUser.idBackPhoto && (
-                      <div>
-                        <p className="text-purple-300 text-sm font-semibold mb-3">Back of ID</p>
-                        <img
-                          src={selectedUser.idBackPhoto}
-                          alt="Back of ID"
-                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
-                        />
-                      </div>
-                    )}
-                    {selectedUser.selfiePhoto && (
-                      <div>
-                        <p className="text-purple-300 text-sm font-semibold mb-3">Selfie</p>
-                        <img
-                          src={selectedUser.selfiePhoto}
-                          alt="Selfie"
-                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
-                        />
-                      </div>
-                    )}
-                    {selectedUser.compositePhoto && (
-                      <div>
-                        <p className="text-purple-300 text-sm font-semibold mb-3">Selfie with ID</p>
-                        <img
-                          src={selectedUser.compositePhoto}
-                          alt="Selfie with ID"
-                          className="w-full rounded-lg border border-purple-500/30 max-h-96 object-cover"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {!selectedUser.compositePhoto && selectedUser.idFrontPhoto && selectedUser.selfiePhoto && (
-                    <button
-                      onClick={generateCompositePhoto}
-                      disabled={generatingComposite}
-                      className="mt-6 px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {generatingComposite ? 'Generating...' : 'Generate AI Composite Photo'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Chat Display Section */}
-              {showSupportChat && (
-                <div className="mt-8 border border-purple-500/30 rounded-lg p-6 bg-black/40">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-white">Message History</h3>
-                    <button
-                      onClick={() => setShowSupportChat(false)}
-                      className="text-gray-400 hover:text-white transition-all"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  
-                  <div className="bg-black/30 rounded-lg p-4 mb-4 h-64 overflow-y-auto border border-purple-500/20">
-                    {loadingMessages ? (
-                      <p className="text-gray-400 text-center py-8">Loading messages...</p>
-                    ) : supportMessages.length === 0 ? (
-                      <p className="text-gray-400 text-center py-8">No messages yet</p>
-                    ) : (
-                      supportMessages.map((msg, idx) => (
-                        <div key={idx} className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div
-                            className={`max-w-xs px-4 py-2 rounded-lg ${
-                              msg.sender === 'user'
-                                ? 'bg-purple-600/60 text-white'
-                                : 'bg-blue-600/60 text-white'
-                            }`}
-                          >
-                            <p className="text-sm">{msg.message}</p>
-                            <p className="text-xs opacity-70 mt-1">
-                              {new Date(msg.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <textarea
-                      value={supportMessageInput}
-                      onChange={(e) => setSupportMessageInput(e.target.value)}
-                      placeholder="Type a reply..."
-                      className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 resize-none h-20"
-                    />
-                    <button
-                      onClick={sendSupportChatMessage}
-                      disabled={!supportMessageInput.trim()}
-                      className="px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons - REMOVE THE "View Support Chat" button since chat is now in modal */}
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => setShowMessageModal(true)}
-                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all"
+        <div className="bg-gray-900 rounded-lg border border-gray-700">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-700">
+                <th className="px-6 py-3 text-left">Name</th>
+                <th className="px-6 py-3 text-left">Email</th>
+                <th className="px-6 py-3 text-left">Phone</th>
+                <th className="px-6 py-3 text-left">Status</th>
+                <th className="px-6 py-3 text-left">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr
+                  key={user._id}
+                  className="border-b border-gray-700 hover:bg-gray-800/50"
                 >
-                  Send Support Message
-                </button>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Support Message Modal */}
-      {showMessageModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-linear-to-br from-black via-black to-purple-900 border border-purple-500/30 rounded-2xl p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-white mb-4">Send Support Message</h2>
-            <p className="text-gray-300 mb-4">
-              Send a message to <span className="font-semibold text-purple-300">{selectedUser.fullName}</span>
-            </p>
-            <textarea
-              value={supportMessage}
-              onChange={(e) => setSupportMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 mb-4 h-32 resize-none"
-              disabled={sendingMessage}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowMessageModal(false)}
-                disabled={sendingMessage}
-                className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white font-semibold hover:bg-gray-600 transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSendSupportMessage}
-                disabled={sendingMessage || !supportMessage.trim()}
-                className="flex-1 px-4 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {sendingMessage ? 'Sending...' : 'Send Message'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Support Chat Modal - Separate from User Details */}
-      {showSupportChat && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gradient-to-br from-black via-black to-purple-900 border border-purple-500/30 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="p-6 border-b border-purple-500/30 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Chat with {selectedUser.fullName}</h2>
-                <p className="text-purple-300 text-sm mt-1">{selectedUser.email}</p>
-              </div>
-              <button
-                onClick={() => setShowSupportChat(false)}
-                className="text-gray-400 hover:text-white text-2xl font-bold transition-all"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {loadingMessages ? (
-                <p className="text-gray-400 text-center py-8">Loading messages...</p>
-              ) : supportMessages.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">No messages yet. Start the conversation!</p>
-              ) : (
-                supportMessages.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-xs px-4 py-3 rounded-lg ${
-                        msg.sender === 'user'
-                          ? 'bg-purple-600/60 text-white'
-                          : 'bg-blue-600/60 text-white'
+                  <td className="px-6 py-4">{user.fullName}</td>
+                  <td className="px-6 py-4">{user.email}</td>
+                  <td className="px-6 py-4">{user.phoneNumber}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-3 py-1 rounded text-sm ${
+                        user.verificationStatus === 'banned'
+                          ? 'bg-red-900 text-red-200'
+                          : user.verificationStatus === 'verified'
+                            ? 'bg-green-900 text-green-200'
+                            : 'bg-yellow-900 text-yellow-200'
                       }`}
                     >
-                      {msg.sender === 'support' && (
-                        <p className="text-xs font-semibold opacity-75 mb-1">Emily from Betr</p>
-                      )}
-                      <p className="text-sm">{msg.message}</p>
-                      <p className="text-xs opacity-70 mt-2">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                      {user.verificationStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-400">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-            {/* Input */}
-            <div className="p-6 border-t border-purple-500/30 flex gap-2">
-              <textarea
-                value={supportMessageInput}
-                onChange={(e) => setSupportMessageInput(e.target.value)}
-                placeholder="Type your reply..."
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 resize-none h-20"
-              />
-              <button
-                onClick={sendSupportChatMessage}
-                disabled={!supportMessageInput.trim()}
-                className="px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed self-end"
-              >
-                Send
-              </button>
+          {users.length === 0 && !error && (
+            <div className="p-8 text-center text-gray-400">
+              No registrations yet.
             </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gradient-to-br from-black via-black to-purple-900 border border-red-500/30 rounded-2xl p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-white mb-4">Confirm Delete</h2>
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete this user? This action cannot be undone.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white font-semibold hover:bg-gray-600 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => deleteConfirm && handleDeleteUser(deleteConfirm)}
-                className="flex-1 px-4 py-3 rounded-lg bg-linear-to-r from-red-500 to-red-600 text-white font-semibold hover:shadow-lg hover:shadow-red-500/50 transition-all"
-              >
-                Delete User
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
