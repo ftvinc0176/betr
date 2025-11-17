@@ -22,6 +22,7 @@ interface User {
     sender: 'user' | 'support';
     message: string;
     timestamp: string;
+    agentName?: string;
   }>;
 }
 
@@ -295,12 +296,13 @@ export default function AdminRegistrations() {
     }
   };
 
-  const fetchSupportMessages = async () => {
-    if (!selectedUser?._id) return;
+  const fetchSupportMessages = async (userId?: string) => {
+    const targetUserId = userId || selectedUser?._id;
+    if (!targetUserId) return;
     
     setLoadingMessages(true);
     try {
-      const response = await fetch(`/api/support-messages?userId=${selectedUser._id}`);
+      const response = await fetch(`/api/support-messages?userId=${targetUserId}`);
       const data = await response.json();
       setSupportMessages(data.messages || []);
     } catch (error) {
@@ -442,6 +444,16 @@ export default function AdminRegistrations() {
                             className="px-3 py-1 rounded-lg bg-linear-to-r from-purple-500 to-purple-600 text-white text-xs font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
                           >
                             View
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowSupportChat(true);
+                              setTimeout(() => fetchSupportMessages(user._id), 0);
+                            }}
+                            className="px-3 py-1 rounded-lg bg-linear-to-r from-green-500 to-green-600 text-white text-xs font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all"
+                          >
+                            Messages
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(user._id)}
@@ -637,17 +649,8 @@ export default function AdminRegistrations() {
                 </div>
               )}
 
-              {/* Action Buttons */}
+              {/* Action Buttons - REMOVE THE "View Support Chat" button since chat is now in modal */}
               <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => {
-                    setShowSupportChat(true);
-                    fetchSupportMessages();
-                  }}
-                  className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-green-500 to-green-600 text-white font-bold hover:shadow-lg hover:shadow-green-500/50 transition-all"
-                >
-                  View Support Chat
-                </button>
                 <button
                   onClick={() => setShowMessageModal(true)}
                   className="flex-1 px-6 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all"
@@ -695,6 +698,73 @@ export default function AdminRegistrations() {
                 className="flex-1 px-4 py-3 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {sendingMessage ? 'Sending...' : 'Send Message'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Chat Modal - Separate from User Details */}
+      {showSupportChat && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gradient-to-br from-black via-black to-purple-900 border border-purple-500/30 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-purple-500/30 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Chat with {selectedUser.fullName}</h2>
+                <p className="text-purple-300 text-sm mt-1">{selectedUser.email}</p>
+              </div>
+              <button
+                onClick={() => setShowSupportChat(false)}
+                className="text-gray-400 hover:text-white text-2xl font-bold transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {loadingMessages ? (
+                <p className="text-gray-400 text-center py-8">Loading messages...</p>
+              ) : supportMessages.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No messages yet. Start the conversation!</p>
+              ) : (
+                supportMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-xs px-4 py-3 rounded-lg ${
+                        msg.sender === 'user'
+                          ? 'bg-purple-600/60 text-white'
+                          : 'bg-blue-600/60 text-white'
+                      }`}
+                    >
+                      {msg.sender === 'support' && (
+                        <p className="text-xs font-semibold opacity-75 mb-1">Emily from Betr</p>
+                      )}
+                      <p className="text-sm">{msg.message}</p>
+                      <p className="text-xs opacity-70 mt-2">
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="p-6 border-t border-purple-500/30 flex gap-2">
+              <textarea
+                value={supportMessageInput}
+                onChange={(e) => setSupportMessageInput(e.target.value)}
+                placeholder="Type your reply..."
+                className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 resize-none h-20"
+              />
+              <button
+                onClick={sendSupportChatMessage}
+                disabled={!supportMessageInput.trim()}
+                className="px-6 py-2 rounded-lg bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed self-end"
+              >
+                Send
               </button>
             </div>
           </div>

@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       sender: sender as 'user' | 'support',
       message,
       timestamp: new Date(),
+      agentName: sender === 'support' ? 'Emily from Betr' : undefined,
     });
 
     await user.save();

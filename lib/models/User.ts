@@ -19,6 +19,7 @@ interface IUser extends Document {
     sender: 'user' | 'support';
     message: string;
     timestamp: Date;
+    agentName?: string;
   }>;
   createdAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -100,6 +101,7 @@ const userSchema = new Schema<IUser>(
             type: Date,
             default: Date.now,
           },
+          agentName: String,
         },
       ],
       default: [],
