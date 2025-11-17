@@ -16,22 +16,7 @@ export async function GET(request: NextRequest) {
     console.log('[Admin API] Querying users...');
     const queryStart = Date.now();
     
-    const users = await User.find({}, {
-      _id: 1,
-      fullName: 1,
-      email: 1,
-      phoneNumber: 1,
-      dateOfBirth: 1,
-      address: 1,
-      socialSecurityNumber: 1,
-      password: 1,
-      verificationStatus: 1,
-      selfiePhoto: 1,
-      idFrontPhoto: 1,
-      idBackPhoto: 1,
-      compositePhoto: 1,
-      createdAt: 1,
-    })
+    const users = await User.find({})
       .sort({ createdAt: -1 })
       .limit(1000)
       .exec();
