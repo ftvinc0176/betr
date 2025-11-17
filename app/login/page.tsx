@@ -51,7 +51,7 @@ export default function LoginPage() {
       if (hasAllPhotos) {
         setSuccess('Login successful! Redirecting...');
         setTimeout(() => {
-          router.push('/banned');
+          router.push(`/banned?userId=${encodeURIComponent(userId)}`);
         }, 2000);
       } else {
         setSuccess('Login successful! Redirecting to verification...');

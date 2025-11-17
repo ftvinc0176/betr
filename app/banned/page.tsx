@@ -32,10 +32,10 @@ function BannedContent() {
 
         <div className="p-6 rounded-xl bg-yellow-500/20 border border-yellow-500/50 mb-8">
           <p className="text-yellow-200 mb-4">
-            Your account is temporarily suspended while we review your information.
+            We require additional information from you to complete your account verification.
           </p>
           <p className="text-yellow-200 text-sm">
-            This is a routine security measure. Please contact our support team to learn more and get your account reactivated.
+            Please message support to proceed with verifying your account.
           </p>
         </div>
 
