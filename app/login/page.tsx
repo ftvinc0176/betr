@@ -78,7 +78,7 @@ export default function LoginPage() {
           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-purple-500 to-purple-600 mb-2">
             Betr
           </h1>
-          <p className="text-purple-300 text-lg font-semibold">Free $10 Sports Betting</p>
+          <p className="text-purple-300 text-lg font-semibold">Deposit $20 in crypto, get $60 back through 12/25/25</p>
         </div>
 
         <div className="backdrop-blur-md bg-white/10 border border-purple-500/30 rounded-2xl p-8 shadow-2xl">

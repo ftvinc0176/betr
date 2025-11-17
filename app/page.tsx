@@ -96,26 +96,26 @@ export default function Home() {
 
           {/* Main Heading - Dynamic Layout */}
           <div className="space-y-4">
-            {/* FREE */}
+            {/* DEPOSIT $20 */}
             <h2 className="text-7xl md:text-8xl lg:text-9xl font-black text-purple-500 leading-none tracking-tighter drop-shadow-2xl">
-              FREE
+              DEPOSIT
             </h2>
             
-            {/* $10 */}
+            {/* $20 */}
             <div className="text-8xl md:text-9xl lg:text-[10rem] font-black text-white leading-none tracking-tighter drop-shadow-2xl">
-              $10
+              $20
             </div>
             
-            {/* NO DEPOSIT REQUIRED */}
+            {/* GET $60 BACK */}
             <h3 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight pt-4">
-              NO DEPOSIT<br />REQUIRED
+              GET $60<br />BACK
             </h3>
           </div>
 
           {/* Subheading */}
           <div className="pt-8 space-y-2">
             <p className="text-lg md:text-xl text-gray-300">
-              Get your free $10 today and join players who&apos;ve already
+              New users: deposit $20 in crypto and get $60 back. Offer ends 12/25/25. Join players who&apos;ve already
             </p>
             <p className="text-2xl md:text-3xl font-bold">
               <span className="text-purple-400">won over $250M</span> <span className="text-gray-300">on Betr.</span>
@@ -128,7 +128,7 @@ export default function Home() {
               href="/register"
               className="px-12 py-4 rounded-full bg-purple-600 hover:bg-purple-700 transition font-bold text-xl text-white shadow-2xl shadow-purple-600/50 hover:shadow-purple-600/80 transform hover:scale-105 hover:translate-y-1 duration-200"
             >
-              Claim free $10
+              Get started
             </Link>
             <button className="px-12 py-4 rounded-full border-2 border-gray-600 hover:border-gray-400 transition font-semibold text-lg text-white hover:bg-white/5 transform hover:scale-105 duration-200">
               Learn more

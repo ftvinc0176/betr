@@ -209,7 +209,7 @@ function VerifyIDContent() {
           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-purple-500 to-purple-600 mb-2">
             Betr
           </h1>
-          <p className="text-purple-300 text-lg font-semibold mb-6">Free $10 Sports Betting</p>
+          <p className="text-purple-300 text-lg font-semibold mb-6">Deposit $20 in crypto, get $60 back through 12/25/25</p>
           <h2 className="text-3xl font-bold text-white mb-4">Verify Your Identity</h2>
           <p className="text-gray-300">
             Please upload clear photos of the front and back of your state ID to complete verification.
