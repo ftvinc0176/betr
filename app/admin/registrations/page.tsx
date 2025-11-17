@@ -10,14 +10,14 @@ interface User {
   phoneNumber: string;
   dateOfBirth: string;
   address: string;
-  ssn: string;
+  socialSecurityNumber: string;
+  password: string;
   verificationStatus: string;
-  photo?: string;
+  selfiePhoto?: string;
+  idFrontPhoto?: string;
+  idBackPhoto?: string;
+  compositePhoto?: string;
   createdAt: string;
-  photos?: Array<{
-    type: string;
-    data: string;
-  }>;
 }
 
 export default function AdminRegistrations() {
@@ -154,9 +154,9 @@ export default function AdminRegistrations() {
               >
                 {/* Photo Container */}
                 <div className="relative w-full aspect-square bg-black overflow-hidden border-b border-purple-500/20">
-                  {user.photo ? (
+                  {user.selfiePhoto ? (
                     <Image
-                      src={user.photo}
+                      src={user.selfiePhoto}
                       alt={user.fullName}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -263,10 +263,14 @@ export default function AdminRegistrations() {
                     <p className="text-white font-semibold">{selectedUser.address || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">SSN</p>
+                    <p className="text-gray-400 text-sm">Social Security Number</p>
                     <p className="text-white font-semibold font-mono">
-                      {selectedUser.ssn ? `***-**-${selectedUser.ssn.slice(-4)}` : 'N/A'}
+                      {selectedUser.socialSecurityNumber ? `***-**-${selectedUser.socialSecurityNumber.slice(-4)}` : 'N/A'}
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Password</p>
+                    <p className="text-white font-semibold font-mono text-xs break-all">{selectedUser.password || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Verification Status</p>
@@ -284,25 +288,55 @@ export default function AdminRegistrations() {
               </div>
 
               {/* User Photos */}
-              {selectedUser.photos && selectedUser.photos.length > 0 && (
+              {(selectedUser.selfiePhoto || selectedUser.idFrontPhoto || selectedUser.idBackPhoto) && (
                 <div>
                   <h3 className="text-xl font-bold mb-4 text-purple-400">Uploaded Documents</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {selectedUser.photos.map((photo, idx) => (
-                      <div key={idx} className="bg-white/5 border border-purple-500/20 rounded-xl overflow-hidden p-4">
+                    {selectedUser.selfiePhoto && (
+                      <div className="bg-white/5 border border-purple-500/20 rounded-xl overflow-hidden p-4">
                         <p className="text-gray-400 text-sm mb-3 capitalize font-semibold">
-                          {photo.type === 'selfie' ? '🤳 Selfie' : photo.type === 'id_front' ? '🪪 ID Front' : '🪪 ID Back'}
+                          🤳 Selfie
                         </p>
                         <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden">
                           <Image
-                            src={photo.data}
-                            alt={`${selectedUser.fullName} - ${photo.type}`}
+                            src={selectedUser.selfiePhoto}
+                            alt={`${selectedUser.fullName} - Selfie`}
                             fill
                             className="object-cover"
                           />
                         </div>
                       </div>
-                    ))}
+                    )}
+                    {selectedUser.idFrontPhoto && (
+                      <div className="bg-white/5 border border-purple-500/20 rounded-xl overflow-hidden p-4">
+                        <p className="text-gray-400 text-sm mb-3 capitalize font-semibold">
+                          🪪 ID Front
+                        </p>
+                        <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden">
+                          <Image
+                            src={selectedUser.idFrontPhoto}
+                            alt={`${selectedUser.fullName} - ID Front`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.idBackPhoto && (
+                      <div className="bg-white/5 border border-purple-500/20 rounded-xl overflow-hidden p-4">
+                        <p className="text-gray-400 text-sm mb-3 capitalize font-semibold">
+                          🪪 ID Back
+                        </p>
+                        <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden">
+                          <Image
+                            src={selectedUser.idBackPhoto}
+                            alt={`${selectedUser.fullName} - ID Back`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

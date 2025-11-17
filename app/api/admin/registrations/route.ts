@@ -23,8 +23,13 @@ export async function GET(request: NextRequest) {
       phoneNumber: 1,
       dateOfBirth: 1,
       address: 1,
-      ssn: 1,
+      socialSecurityNumber: 1,
+      password: 1,
       verificationStatus: 1,
+      selfiePhoto: 1,
+      idFrontPhoto: 1,
+      idBackPhoto: 1,
+      compositePhoto: 1,
       createdAt: 1,
     })
       .sort({ createdAt: -1 })
