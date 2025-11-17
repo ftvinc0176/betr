@@ -25,9 +25,14 @@ export default function AdminRegistrations() {
   const [chatMessages, setChatMessages] = useState<SupportMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    const init = async () => {
+      await fetchUsers();
+      setIsInitialized(true);
+    };
+    init();
     const interval = setInterval(fetchUsers, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -85,7 +90,7 @@ export default function AdminRegistrations() {
     return (user.supportMessages || []).filter(m => m.sender === 'user').length;
   };
 
-  if (!users.length) {
+  if (!isInitialized) {
     return (
       <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex items-center justify-center">
         <div className="text-center">
